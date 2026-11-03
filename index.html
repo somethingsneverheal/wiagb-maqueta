@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WHO IS A GOOD BOY?</title>
 <style>
-  :root { --h: min(70vh, 40vw); --w: calc(var(--h) * 235 / 335); }
+  :root { --h: min(76vh, 42vw); --w: calc(var(--h) * 235 / 335); }
   * { box-sizing: border-box; }
   body { margin: 0; height: 100vh; overflow: hidden; background: #000; color: #bbb;
          font: 13px/1.4 Helvetica, Arial, sans-serif; display: flex; flex-direction: column;
-         align-items: center; justify-content: center; user-select: none; }
+         align-items: center; justify-content: flex-start; padding-top: max(70px, 9vh); user-select: none; }
   /* sin preserve-3d: cada cara es un plano propio, el orden lo decide z-index y el navegador oculta la cara de espaldas */
   .book { position: relative; width: calc(var(--w) * 2); height: var(--h); perspective: 3000px; cursor: pointer;
           transition: transform .8s; }
@@ -35,16 +35,16 @@
             background: linear-gradient(115deg, #6e4f17 0%, #b8892f 22%, #f6e3a1 45%, #c99a3c 57%, #7a5a1c 80%, #c4963d 100%);
             background-size: 100% 300%; animation: brillo 6s ease-in-out infinite alternate; }
   @keyframes brillo { from { background-position: 0 0; } to { background-position: 0 100%; } }
-  .bar { margin-top: 34px; display: flex; gap: 18px; align-items: center; }
+  .bar { margin-top: 2.2vh; display: flex; gap: 18px; align-items: center; }
   button { background: none; border: 1px solid #555; color: #ddd; padding: 7px 16px; cursor: pointer;
            font: inherit; letter-spacing: .08em; }
   button:hover { border-color: #ddd; }
   #pg { min-width: 200px; text-align: center; letter-spacing: .08em; }
   @font-face { font-family: Grinder; src: local("MB-RealGrinder"), url(p/MB-Real_Grinder.ttf); }
   .logo { position: fixed; top: 22px; left: 50%; transform: translateX(-50%); font: 20px Grinder, serif;
-          color: #ebe1cd; text-decoration: none; letter-spacing: .04em; white-space: nowrap; opacity: .85; }
+          color: #ebe1cd; text-decoration: none; letter-spacing: .04em; white-space: nowrap; opacity: .85; z-index: 9999; }
   .logo:hover { opacity: 1; }
-  .hint { position: fixed; bottom: 14px; opacity: .45; font-size: 9px; letter-spacing: .1em; }
+  .hint { margin-top: 1.4vh; opacity: .45; font-size: 9px; letter-spacing: .1em; }
 </style>
 </head>
 <body>
