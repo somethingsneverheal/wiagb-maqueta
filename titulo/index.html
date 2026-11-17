@@ -19,8 +19,8 @@
   .gold { position: absolute; inset: 0; pointer-events: none;
           filter: drop-shadow(0 1.2px .6px rgba(0,0,0,.75)) drop-shadow(0 -.6px 0 rgba(255,240,190,.55)); }
   .gold i { position: absolute; inset: 0; -webkit-mask: center/100% 100% no-repeat; mask: center/100% 100% no-repeat;
-            background: linear-gradient(115deg, #6e4f17 0%, #b8892f 22%, #f6e3a1 45%, #c99a3c 57%, #7a5a1c 80%, #c4963d 100%);
-            background-size: 100% 300%; animation: brillo 6s ease-in-out infinite alternate; }
+            background: linear-gradient(170deg, #b8892f 0%, #cda852 30%, #f3dc9a 42%, #fffbe6 50%, #f3dc9a 58%, #cda852 70%, #b8892f 100%);
+            background-size: 100% 250%; animation: brillo 4.5s ease-in-out infinite alternate; }
   @keyframes brillo { from { background-position: 0 0; } to { background-position: 0 100%; } }
   #sello { position: absolute; top: 14px; left: 14px; border: 1px solid #fff; color: #fff; padding: 3px 8px; letter-spacing: .1em; opacity: 0; }
   #vacio { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; background: #000; padding: 20px; }
@@ -79,8 +79,8 @@ async function exportarPNG() {
   const [foto, m] = await Promise.all([img(FOTO), img(f.m)]), W = m.width, H = m.height;
   const c = Object.assign(document.createElement("canvas"), { width: W, height: H }), x = c.getContext("2d");
   const t = Object.assign(document.createElement("canvas"), { width: W, height: H }), y = t.getContext("2d");
-  const g = y.createLinearGradient(0, 0, W * .45, H);   // dorado fijo, en el punto claro del reflejo
-  [[0, "#b8892f"], [.3, "#f6e3a1"], [.55, "#c99a3c"], [.8, "#f1dc98"], [1, "#b8892f"]].forEach(([p, col]) => g.addColorStop(p, col));
+  const g = y.createLinearGradient(0, 0, W * .15, H);   // dorado fijo, con el reflejo a media altura
+  [[0, "#b8892f"], [.25, "#cda852"], [.42, "#f3dc9a"], [.5, "#fffbe6"], [.58, "#f3dc9a"], [.75, "#cda852"], [1, "#b8892f"]].forEach(([p, col]) => g.addColorStop(p, col));
   y.fillStyle = g; y.fillRect(0, 0, W, H); y.globalCompositeOperation = "destination-in"; y.drawImage(m, 0, 0);
   x.drawImage(foto, 0, 0, W, H); x.shadowColor = "rgba(0,0,0,.7)"; x.shadowOffsetY = 2; x.shadowBlur = 1.5; x.drawImage(t, 0, 0);
   c.toBlob(b => bajar(b, `titulo_${f.slug}.png`), "image/png");
