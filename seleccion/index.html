@@ -35,7 +35,7 @@
 <div class="row">
   <button data-a="prev">←</button><button data-a="no">✕ NO</button><button data-a="si">✓ SÍ</button><button data-a="next">→</button>
 </div>
-<div class="row"><button data-a="png">EXPORTAR PNG</button><button data-a="copiar" id="copiar">COPIAR LISTA DE SÍ Y NO</button><button data-a="deshacer">DESHACER</button><button data-a="reiniciar">REINICIAR</button></div>
+<div class="row"><button data-a="png">EXPORTAR PNG</button><button data-a="enviar" id="enviar">ENVIAR MI SELECCIÓN</button><button data-a="deshacer">DESHACER</button><button data-a="reiniciar">REINICIAR</button></div>
 <div class="hint">← → CAMBIAR DE TIPO · S SÍ · N NO · Z DESHACER · E EXPORTAR PNG · O ARRASTRA LA PORTADA</div>
 <script src="data.js"></script>
 <script>
@@ -67,7 +67,7 @@ function decidir(a) {
   const f = actual(); if (!f) return;
   if (a === vista) return mover(1);                      // ya estaba ahí: solo pasa a la siguiente
   st.historial.push({ t: new Date().toISOString(), slug: f.slug, nombre: f.n, antes: st.estado[f.slug] || "pendiente", ahora: a });
-  st.estado[f.slug] = a; localStorage.setItem(KEY, JSON.stringify(st));
+  st.estado[f.slug] = a; localStorage.setItem(KEY, JSON.stringify(st)); programarEnvio();
   card.className = "fly"; card.style.opacity = 0;
   card.style.transform = a === "si" ? "translateX(60%) rotate(12deg)" : "translateX(-60%) rotate(-12deg)";
   setTimeout(render, 230);                               // la lista se acorta, así que el mismo índice ya es la siguiente
@@ -85,14 +85,20 @@ async function exportarPNG() {
   x.drawImage(foto, 0, 0, W, H); x.shadowColor = "rgba(0,0,0,.7)"; x.shadowOffsetY = 2; x.shadowBlur = 1.5; x.drawImage(t, 0, 0);
   c.toBlob(b => bajar(b, `titulo_${f.slug}.png`), "image/png");
 }
-// para mandar la selección por WhatsApp: copia las dos listas como texto
-async function copiar() {
+// lo que marca cada uno le llega a Fabián: se manda la selección entera a un canal de avisos (ntfy.sh)
+// ponytail: cada envío es la foto completa de esa persona; vale el último. Si hiciera falta histórico fiable, pasar a una base de datos
+const TEMA = "wiagb-titulo-981b9d30a3c3"; let tEnvio;
+async function enviar(aMano) {
+  let q = localStorage.getItem(KEY + "_quien");
+  if (!q) { q = (prompt("¿Quién eres? Tu nombre, para saber de quién es la selección") || "").trim().slice(0, 40); if (!q) return; localStorage.setItem(KEY + "_quien", q); }
   const n = v => de(v).map(f => f.n.replace(/, .*/, "")).join(", ") || "ninguna";
-  const txt = `SÍ: ${n("si")}\nNO: ${n("no")}\nSin decidir: ${de("pendiente").length}`;
-  try { await navigator.clipboard.writeText(txt); } catch { prompt("Copia esto:", txt); }
-  $("copiar").textContent = "COPIADO"; setTimeout(() => $("copiar").textContent = "COPIAR LISTA DE SÍ Y NO", 1500);
+  const cuerpo = { topic: TEMA, title: `${q} · ${FONTS.length} tipos`, message: `SÍ: ${n("si")}\nNO: ${n("no")}\nSin decidir: ${de("pendiente").length}` };
+  let ok = false; try { ok = (await fetch("https://ntfy.sh/", { method: "POST", body: JSON.stringify(cuerpo) })).ok; } catch {}
+  if (ok) localStorage.setItem(KEY + "_enviado", "1");
+  if (aMano) { $("enviar").textContent = ok ? "ENVIADO" : "NO SE HA PODIDO ENVIAR"; setTimeout(() => $("enviar").textContent = "ENVIAR MI SELECCIÓN", 2000); }
 }
-const guardar = () => localStorage.setItem(KEY, JSON.stringify(st));
+const programarEnvio = () => { clearTimeout(tEnvio); tEnvio = setTimeout(enviar, 5000); };   // 5 s después del último cambio
+const guardar = () => { localStorage.setItem(KEY, JSON.stringify(st)); programarEnvio(); };
 // deshace la última decisión y vuelve a enseñar ese tipo donde estaba
 function deshacer() {
   const h = st.historial.pop(); if (!h) return;
@@ -103,7 +109,7 @@ function reiniciar() {
   if (!confirm("¿Borrar toda la selección y empezar de cero?")) return;
   st = { estado: {}, historial: [] }; guardar(); vista = "pendiente"; idx = 0; render();
 }
-const ACC = { prev: () => mover(-1), next: () => mover(1), si: () => decidir("si"), no: () => decidir("no"), png: exportarPNG, copiar, deshacer, reiniciar };
+const ACC = { prev: () => mover(-1), next: () => mover(1), si: () => decidir("si"), no: () => decidir("no"), png: exportarPNG, enviar: () => enviar(true), deshacer, reiniciar };
 addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   if (b.dataset.v) { vista = b.dataset.v; idx = 0; render(); } else ACC[b.dataset.a]?.();
@@ -126,6 +132,8 @@ const soltar = e => {
 };
 card.addEventListener("pointerup", soltar); card.addEventListener("pointercancel", soltar);
 render();
+// quien ya había marcado cosas antes de este cambio: se manda al volver a abrir
+if (st.historial.length && !localStorage.getItem(KEY + "_enviado")) setTimeout(enviar, 1500);
 </script>
 </body>
 </html>
