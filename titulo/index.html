@@ -35,7 +35,7 @@
 <div class="row">
   <button data-a="prev">←</button><button data-a="no">✕ NO</button><button data-a="si">✓ SÍ</button><button data-a="next">→</button>
 </div>
-<div class="row"><button data-a="png">EXPORTAR PNG</button><button data-a="enviar" id="enviar">ENVIAR MI SELECCIÓN</button><button data-a="deshacer">DESHACER</button><button data-a="reiniciar">REINICIAR</button></div>
+<div class="row"><button data-a="png">EXPORTAR PNG</button><button id="enviar" disabled>VOTACIÓN CERRADA</button><button data-a="deshacer">DESHACER</button><button data-a="reiniciar">REINICIAR</button></div>
 <div class="hint">← → CAMBIAR DE TIPO · S SÍ · N NO · Z DESHACER · E EXPORTAR PNG · O ARRASTRA LA PORTADA</div>
 <script src="data.js"></script>
 <script>
@@ -88,7 +88,7 @@ async function exportarPNG() {
 // lo que marca cada uno le llega a Fabián: se manda la selección entera a un canal de avisos (ntfy.sh)
 // ponytail: cada envío es la foto completa de esa persona; vale el último. Si hiciera falta histórico fiable, pasar a una base de datos
 const TEMA = "wiagb-titulo-981b9d30a3c3"; let tEnvio;
-async function enviar(aMano) {
+async function enviar(aMano) { return;   // votación cerrada el 18/11
   let q = localStorage.getItem(KEY + "_quien");
   if (!q) { q = (prompt("¿Quién eres? Tu nombre, para saber de quién es la selección") || "").trim().slice(0, 40); if (!q) return; localStorage.setItem(KEY + "_quien", q); }
   const n = v => de(v).map(f => f.n.replace(/, .*/, "")).join(", ") || "ninguna";
