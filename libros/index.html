@@ -84,7 +84,8 @@ addEventListener("pointerleave", () => { mx = my = -1e4; });
     if (drag?.b !== b && (Math.abs(b.vy) > .01 || Math.abs(b.vx) > .01)) { b.by += b.vy; b.bx = lim(b.bx + b.vx, 60); b.vy *= .93; b.vx *= .9; }  // inercia al soltar
     const r = b.el.parentElement.getBoundingClientRect(), h = b.el.offsetHeight, cx = r.left + r.width / 2, cy = r.top + h / 2;
     const nx = (mx - cx) / (r.width / 2), ny = (my - cy) / (h / 2), w = Math.max(0, 1 - Math.hypot(nx * .7, ny * .5) / 1.9);  // cerca = 1, lejos = 0
-    const ty = b.by + lim(nx, 1.4) * 130 * w + gy + (b.esCentro && b.esCentro() ? dedo : 0), tx = b.bx - lim(ny, 1.2) * 22 * w + gx, k = drag?.b === b ? .3 : .045;
+    const f = b.esCentro && !b.esCentro() ? .3 : 1;  // en el móvil, los de los lados siguen la inclinación más flojo
+    const ty = b.by + lim(nx, 1.4) * 130 * w + gy * f, tx = b.bx - lim(ny, 1.2) * 22 * w + gx * f, k = drag?.b === b ? .3 : .045;
     b.ry += (ty - b.ry) * k; b.rx += (tx - b.rx) * k;
     if (b.esCentro && b.esCentro()) dbg("giro centro", b.ry.toFixed(1) + " / " + b.rx.toFixed(1));
     b.el.style.transform = `rotateX(${b.rx.toFixed(2)}deg) rotateY(${b.ry.toFixed(2)}deg)`;
@@ -97,29 +98,41 @@ if ("ontouchstart" in window) {
   let idx = 0, x0 = 0, y0 = 0, dx = 0, eje = null, base = null;
   const paso = () => figs[1].offsetLeft - figs[0].offsetLeft;
   const colocar = anim => { esc.style.transition = anim ? "transform .45s cubic-bezier(.2,.8,.2,1)" : "none"; esc.style.transform = `translateX(${-idx * paso() + dx}px)`; };
-  esc.addEventListener("touchstart", e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; dx = 0; eje = null; }, { passive: true });
+  // Dedo: si empiezas sobre el libro del centro, lo giras (con inercia); si empiezas fuera o sobre los de los lados, pasas de libro.
+  // Un toque en el libro de al lado lo trae al centro.
+  let modo = null, tocado = -1, ultX = 0;
+  esc.addEventListener("touchstart", e => { const t = e.touches[0], f = e.target.closest("figure"); x0 = ultX = t.clientX; y0 = t.clientY; dx = 0; eje = null;
+    tocado = f ? figs.indexOf(f) : -1; modo = tocado === idx ? "girar" : "pasar";
+    if (modo === "girar") { drag = { b: B[idx] }; B[idx].vy = B[idx].vx = 0; } }, { passive: true });
   esc.addEventListener("touchmove", e => {
     const t = e.touches[0], mx = t.clientX - x0, my = t.clientY - y0;
     if (!eje && Math.hypot(mx, my) > 8) eje = Math.abs(mx) > Math.abs(my) ? "x" : "y";
+    if (!eje) return; e.preventDefault();
+    if (modo === "girar") { const b = B[idx], d = (t.clientX - ultX) * .6; b.by += d; b.vy = d; ultX = t.clientX; dbg("giro dedo", Math.round(b.by)); return; }
     if (eje !== "x") return;
-    e.preventDefault(); dx = (idx === 0 && mx > 0) || (idx === figs.length - 1 && mx < 0) ? mx * .35 : mx;
-    dedo = lim(mx * .5, 80); colocar(false); dbg("dx", Math.round(dx) + " eje " + eje + " idx " + idx);
+    dx = (idx === 0 && mx > 0) || (idx === figs.length - 1 && mx < 0) ? mx * .35 : mx; colocar(false); dbg("dx", Math.round(dx) + " idx " + idx);
   }, { passive: false });
-  esc.addEventListener("touchend", () => { if (dx < -50 && idx < figs.length - 1) idx++; else if (dx > 50 && idx > 0) idx--; dx = 0; dedo = 0; colocar(true); });
+  esc.addEventListener("touchend", () => {
+    if (modo === "girar") drag = null;
+    else if (!eje && tocado >= 0 && tocado !== idx) idx = tocado;  // toque en el de al lado
+    else if (dx < -50 && idx < figs.length - 1) idx++; else if (dx > 50 && idx > 0) idx--;
+    dx = 0; modo = null; colocar(true);
+  });
   addEventListener("resize", () => colocar(false));
   // Inclinación del móvil → los libros se inclinan. En iPhone Safari obliga a pedir permiso: se pide con el primer toque.
-  const mover = e => { if (e.gamma == null) return; if (base === null) base = e.beta; gy = -lim(e.gamma, 50) * 1.6; gx = -lim((e.beta - base) * .7, 25); dbg("inclinación", Math.round(e.gamma) + " / " + Math.round(e.beta)); };
-  txt.textContent = "DESLIZA PARA PASAR DE LIBRO · INCLINA EL MÓVIL PARA GIRARLOS";
+  let baseG = null;
+  const mover = e => { if (e.gamma == null) return; if (base === null) { base = e.beta; baseG = e.gamma; } gy = -lim(e.gamma - baseG, 50) * 1.6; gx = -lim((e.beta - base) * .7, 25); dbg("inclinación", Math.round(e.gamma) + " / " + Math.round(e.beta)); };
+  txt.textContent = "ARRASTRA EL LIBRO PARA GIRARLO · DESLIZA POR LOS LADOS O TOCA EL DE AL LADO PARA CAMBIAR";
   if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
     txt.textContent = "TOCA UNA VEZ PARA QUE LOS LIBROS SIGAN EL MÓVIL · DESLIZA PARA PASAR DE LIBRO";
     let pedido = false;
     const activar = () => { if (pedido) return; pedido = true;
       DeviceOrientationEvent.requestPermission().then(r => { dbg("permiso", r);
-        if (r === "granted") { addEventListener("deviceorientation", mover); txt.textContent = "DESLIZA PARA PASAR DE LIBRO · INCLINA EL MÓVIL PARA GIRARLOS"; } else pedido = false;
+        if (r === "granted") { addEventListener("deviceorientation", mover); txt.textContent = "ARRASTRA EL LIBRO PARA GIRARLO · INCLINA EL MÓVIL · DESLIZA POR LOS LADOS PARA CAMBIAR"; } else pedido = false;
       }).catch(err => { dbg("permiso", "error " + err); pedido = false; }); };
     addEventListener("click", activar); addEventListener("touchend", activar);
   } else addEventListener("deviceorientation", mover);
   colocar(false);
-  B.forEach((b, i) => b.esCentro = () => i === idx);
+  B.forEach((b, i) => { b.esCentro = () => i === idx; b.by = b.ry = 0; });  // de frente: el giro es igual a los dos lados
 }
 </script></body></html>
