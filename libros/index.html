@@ -107,10 +107,18 @@ if ("ontouchstart" in window) {
   }, { passive: false });
   esc.addEventListener("touchend", () => { if (dx < -50 && idx < figs.length - 1) idx++; else if (dx > 50 && idx > 0) idx--; dx = 0; dedo = 0; colocar(true); });
   addEventListener("resize", () => colocar(false));
-  // Inclinación del móvil: solo donde no pide permiso (Android). En iPhone Safari siempre lo pide, así que ahí se gira con el dedo.
-  txt.textContent = "DESLIZA PARA PASAR DE LIBRO · EL LIBRO GIRA MIENTRAS LO ARRASTRAS";
-  if (!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function"))
-    addEventListener("deviceorientation", e => { if (e.gamma == null) return; if (base === null) base = e.beta; gy = -lim(e.gamma, 50) * 1.6; gx = -lim((e.beta - base) * .7, 25); });
+  // Inclinación del móvil → los libros se inclinan. En iPhone Safari obliga a pedir permiso: se pide con el primer toque.
+  const mover = e => { if (e.gamma == null) return; if (base === null) base = e.beta; gy = -lim(e.gamma, 50) * 1.6; gx = -lim((e.beta - base) * .7, 25); dbg("inclinación", Math.round(e.gamma) + " / " + Math.round(e.beta)); };
+  txt.textContent = "DESLIZA PARA PASAR DE LIBRO · INCLINA EL MÓVIL PARA GIRARLOS";
+  if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
+    txt.textContent = "TOCA UNA VEZ PARA QUE LOS LIBROS SIGAN EL MÓVIL · DESLIZA PARA PASAR DE LIBRO";
+    let pedido = false;
+    const activar = () => { if (pedido) return; pedido = true;
+      DeviceOrientationEvent.requestPermission().then(r => { dbg("permiso", r);
+        if (r === "granted") { addEventListener("deviceorientation", mover); txt.textContent = "DESLIZA PARA PASAR DE LIBRO · INCLINA EL MÓVIL PARA GIRARLOS"; } else pedido = false;
+      }).catch(err => { dbg("permiso", "error " + err); pedido = false; }); };
+    addEventListener("click", activar); addEventListener("touchend", activar);
+  } else addEventListener("deviceorientation", mover);
   colocar(false);
   B.forEach((b, i) => b.esCentro = () => i === idx);
 }
