@@ -32,6 +32,17 @@
   @keyframes brillo { from { background-position: 0 0; } to { background-position: 0 100%; } }
   .hint { position: fixed; bottom: 14px; left: 0; right: 0; text-align: center; opacity: .45; font-size: 9px; letter-spacing: .1em; }
 </style></head><body>
+<script>
+// ?debug: muestra en pantalla lo que pasa en el móvil (errores, toques, giro) para poder arreglarlo a distancia
+if (location.search.includes("debug")) {
+  const d = document.createElement("pre"); d.style.cssText = "position:fixed;left:0;right:0;top:80px;z-index:99999;margin:0;padding:8px;font:11px/1.3 monospace;color:#0f0;background:rgba(0,0,0,.8);white-space:pre-wrap";
+  document.addEventListener("DOMContentLoaded", () => document.body.appendChild(d));
+  window.DBG = {}; const pinta = () => { d.textContent = Object.entries(DBG).map(([k, v]) => k + ": " + v).join("\n"); };
+  window.dbg = (k, v) => { DBG[k] = v; pinta(); };
+  window.onerror = (m, f, l) => dbg("ERROR", m + " (línea " + l + ")");
+  ["touchstart", "touchmove", "touchend"].forEach(t => addEventListener(t, () => dbg(t, (DBG[t] || 0) + 1), { passive: true }));
+} else window.dbg = () => {};
+</script>
 <div class="escena" id="escena"></div>
 <div class="hint"><span id="txt">PASA EL RATÓN CERCA DE UN LIBRO · ARRÁSTRALO PARA GIRARLO Y VER LA CONTRA · DOBLE CLIC LO VUELVE DE FRENTE</span></div>
 <script src="../nav.js"></script>
@@ -75,12 +86,13 @@ addEventListener("pointerleave", () => { mx = my = -1e4; });
     const nx = (mx - cx) / (r.width / 2), ny = (my - cy) / (h / 2), w = Math.max(0, 1 - Math.hypot(nx * .7, ny * .5) / 1.9);  // cerca = 1, lejos = 0
     const ty = b.by + lim(nx, 1.4) * 130 * w + gy + (b.esCentro && b.esCentro() ? dedo : 0), tx = b.bx - lim(ny, 1.2) * 22 * w + gx, k = drag?.b === b ? .3 : .045;
     b.ry += (ty - b.ry) * k; b.rx += (tx - b.rx) * k;
+    if (b.esCentro && b.esCentro()) dbg("giro centro", b.ry.toFixed(1) + " / " + b.rx.toFixed(1));
     b.el.style.transform = `rotateX(${b.rx.toFixed(2)}deg) rotateY(${b.ry.toFixed(2)}deg)`;
   }
   requestAnimationFrame(anim);
 })();
 if ("ontouchstart" in window) {
-  document.body.classList.add("movil");
+  document.body.classList.add("movil"); dbg("modo", "móvil · ancho " + innerWidth + " · paso " + (document.getElementById("escena").children[1].offsetLeft - document.getElementById("escena").children[0].offsetLeft));
   const esc = document.getElementById("escena"), figs = [...esc.children], txt = document.getElementById("txt");
   let idx = 0, x0 = 0, y0 = 0, dx = 0, eje = null, base = null;
   const paso = () => figs[1].offsetLeft - figs[0].offsetLeft;
@@ -91,7 +103,7 @@ if ("ontouchstart" in window) {
     if (!eje && Math.hypot(mx, my) > 8) eje = Math.abs(mx) > Math.abs(my) ? "x" : "y";
     if (eje !== "x") return;
     e.preventDefault(); dx = (idx === 0 && mx > 0) || (idx === figs.length - 1 && mx < 0) ? mx * .35 : mx;
-    dedo = lim(mx * .5, 80); colocar(false);
+    dedo = lim(mx * .5, 80); colocar(false); dbg("dx", Math.round(dx) + " eje " + eje + " idx " + idx);
   }, { passive: false });
   esc.addEventListener("touchend", () => { if (dx < -50 && idx < figs.length - 1) idx++; else if (dx > 50 && idx > 0) idx--; dx = 0; dedo = 0; colocar(true); });
   addEventListener("resize", () => colocar(false));
