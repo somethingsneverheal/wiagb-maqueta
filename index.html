@@ -114,13 +114,20 @@ function target(p, v) {
 }
 const moving = p => now() - p.t0 < DUR;
 
-let k = 0;
+let k = 0, clsAntes = "closed";
+const movilV = matchMedia("(orientation: portrait) and (max-width: 700px)");
 function render() {
   const s = steps[k];
   L.forEach((p, i) => target(p, i < s.c ? -180 : 0));
   target(FF, s.fo ? 0 : 180);
   target(FB, s.bo ? 0 : -180);
-  book.className = "book" + (s.c === 0 ? " closed" : s.c === N ? " back" : s.fo ? " wideL" : s.bo ? " wideR" : "");
+  const cls = s.c === 0 ? "closed" : s.c === N ? "back" : s.fo ? "wideL" : s.bo ? "wideR" : "";
+  // en el móvil el libro cambia de tamaño (cerrado más grande, solapa abierta más pequeño): si encoge, encoge rápido antes
+  // de que la hoja se abra; si crece, espera a que la hoja termine de girar. Así nunca se sale de la pantalla
+  const esc = c => !movilV.matches ? 1 : c === "closed" || c === "back" ? 1.6 : c.startsWith("wide") ? .68 : 1;
+  book.style.transition = esc(cls) > esc(clsAntes) ? "transform .45s .8s, scale .45s .8s" : "transform .8s, scale .3s";
+  clsAntes = cls;
+  book.className = "book" + (cls ? " " + cls : "");
   document.getElementById("pg").textContent = label(s);
   // carga las hojas de alrededor (2 por delante y por detrás) y las solapas
   const cargar = el => { if (el.dataset.src) { el.style.backgroundImage = `url('${el.dataset.src}')`; delete el.dataset.src; } };

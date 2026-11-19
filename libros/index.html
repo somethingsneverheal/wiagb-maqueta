@@ -41,7 +41,6 @@
   @keyframes brillo { from { background-position: 0 0; } to { background-position: 0 100%; } }
   .hint { position: fixed; bottom: 14px; left: 0; right: 0; text-align: center; opacity: .45; font-size: 9px; letter-spacing: .1em; }
 </style></head><body>
-<script>window.dbg = () => {};</script>
 <div class="escena" id="escena"></div>
 <div class="hint"><span id="txt">PASA EL RATÓN CERCA DE UN LIBRO · ARRÁSTRALO PARA GIRARLO Y VER LA CONTRA · DOBLE CLIC LO VUELVE DE FRENTE</span></div>
 <script src="../nav.js"></script>
@@ -84,13 +83,13 @@ addEventListener("pointerleave", () => { mx = my = -1e4; });
     const f = b.esCentro && !b.esCentro() ? .3 : 1;  // en el móvil, los de los lados siguen la inclinación más flojo
     const ty = b.by + lim(nx, 1.4) * 130 * w + gy * f, tx = b.bx - lim(ny, 1.2) * 22 * w + gx * f, k = drag?.b === b ? .3 : .045;
     b.ry += (ty - b.ry) * k; b.rx += (tx - b.rx) * k;
-    if (b.esCentro && b.esCentro()) dbg("giro centro", b.ry.toFixed(1) + " / " + b.rx.toFixed(1));
+    if (b.esCentro && b.esCentro())
     b.el.style.transform = `rotateX(${b.rx.toFixed(2)}deg) rotateY(${b.ry.toFixed(2)}deg)`;
   }
   requestAnimationFrame(anim);
 })();
 if ("ontouchstart" in window) {
-  document.body.classList.add("movil"); dbg("modo", "móvil · ancho " + innerWidth + " · paso " + (document.getElementById("escena").children[1].offsetLeft - document.getElementById("escena").children[0].offsetLeft));
+  document.body.classList.add("movil");
   const esc = document.getElementById("escena"), figs = [...esc.children], txt = document.getElementById("txt");
   let idx = 0, x0 = 0, y0 = 0, dx = 0, eje = null, base = null;
   const paso = () => figs[1].offsetLeft - figs[0].offsetLeft;
@@ -107,9 +106,9 @@ if ("ontouchstart" in window) {
     if (!eje) return; e.preventDefault();
     if (modo === "girar") { const b = B[idx], d = (t.clientX - ultX) * .6; b.by += d; b.vy = d; ultX = t.clientX;
       vert += t.clientY - ultY; ultY = t.clientY; b.bx = -28 * Math.tanh(vert / 120); b.vx = 0;  // arriba-abajo: poco y con tope suave
-      dbg("giro dedo", Math.round(b.by) + " / " + Math.round(b.bx)); return; }
+      return; }
     if (eje !== "x") return;
-    dx = (idx === 0 && mx > 0) || (idx === figs.length - 1 && mx < 0) ? mx * .35 : mx; colocar(false); dbg("dx", Math.round(dx) + " idx " + idx);
+    dx = (idx === 0 && mx > 0) || (idx === figs.length - 1 && mx < 0) ? mx * .35 : mx; colocar(false);
   }, { passive: false });
   esc.addEventListener("touchend", () => {
     if (modo === "girar") { drag = null; B[idx].bx = 0; }  // al soltar, la inclinación vertical vuelve suave
@@ -118,19 +117,7 @@ if ("ontouchstart" in window) {
     dx = 0; modo = null; colocar(true);
   });
   addEventListener("resize", () => colocar(false));
-  // Inclinación del móvil → los libros se inclinan. En iPhone Safari obliga a pedir permiso: se pide con el primer toque.
-  let baseG = null;
-  const mover = e => { if (e.gamma == null) return; if (base === null) { base = e.beta; baseG = e.gamma; } gy = -lim(e.gamma - baseG, 50) * 1.6; gx = -lim((e.beta - base) * .7, 25); dbg("inclinación", Math.round(e.gamma) + " / " + Math.round(e.beta)); };
   txt.textContent = "ARRASTRA EL LIBRO PARA GIRARLO · DESLIZA POR LOS LADOS O TOCA EL DE AL LADO PARA CAMBIAR";
-  if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
-    txt.textContent = "TOCA UNA VEZ PARA QUE LOS LIBROS SIGAN EL MÓVIL · DESLIZA PARA PASAR DE LIBRO";
-    let pedido = false;
-    const activar = () => { if (pedido) return; pedido = true;
-      DeviceOrientationEvent.requestPermission().then(r => { dbg("permiso", r);
-        if (r === "granted") { addEventListener("deviceorientation", mover); txt.textContent = "ARRASTRA EL LIBRO PARA GIRARLO · INCLINA EL MÓVIL · DESLIZA POR LOS LADOS PARA CAMBIAR"; } else pedido = false;
-      }).catch(err => { dbg("permiso", "error " + err); pedido = false; }); };
-    addEventListener("click", activar); addEventListener("touchend", activar);
-  } else addEventListener("deviceorientation", mover);
   colocar(false);
   B.forEach((b, i) => { b.esCentro = () => i === idx; b.by = b.ry = 0; });  // de frente: el giro es igual a los dos lados
 }

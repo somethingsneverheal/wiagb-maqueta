@@ -14,16 +14,16 @@
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-  :root { --h: min(calc(100dvh - 250px), 128vw); --w: calc(var(--h) * 237 / 335); }
+  /* el menú común ocupa ~64 px arriba (~84 en móvil); la portada cabe en lo que queda */
+  :root { --top: 72px; --h: min(calc(100dvh - var(--top) - 130px), 128vw); --w: calc(var(--h) * 237 / 335); }
+  @media (max-width: 760px) { :root { --top: 92px; } }
   * { box-sizing: border-box; }
   body { margin: 0; height: 100dvh; overflow: hidden; background: #000; color: #bbb; font: 12px/1.4 Helvetica, Arial, sans-serif;
-         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding-top: 56px; box-sizing: border-box;
-         user-select: none; -webkit-user-select: none; }
-  button { background: none; border: 1px solid #555; color: #ddd; padding: 7px 14px; cursor: pointer; font: inherit; letter-spacing: .06em; }
-  button:hover, button.on { border-color: #ddd; color: #fff; }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-  #card { position: relative; width: var(--w); height: var(--h); background: #141210 center/cover; touch-action: none; cursor: grab; }
-  #card.fly { transition: transform .22s ease-in, opacity .22s; }
+         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding-top: var(--top);
+         user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  button { background: none; border: 1px solid #555; color: #ddd; padding: 7px 16px; cursor: pointer; font: inherit; letter-spacing: .08em; }
+  button:hover { border-color: #ddd; }
+  #card { position: relative; width: var(--w); height: var(--h); background: #141210 center/cover; touch-action: pan-y; }
   /* mismo dorado que la maqueta: sombra abajo, brillo arriba y reflejo lento */
   .gold { position: absolute; inset: 0; pointer-events: none;
           filter: drop-shadow(0 1.2px .6px rgba(0,0,0,.75)) drop-shadow(0 -.6px 0 rgba(255,240,190,.55)); }
@@ -31,118 +31,42 @@
             background: linear-gradient(170deg, #b8892f 0%, #cda852 30%, #f3dc9a 42%, #fffbe6 50%, #f3dc9a 58%, #cda852 70%, #b8892f 100%);
             background-size: 100% 250%; animation: brillo 4.5s ease-in-out infinite alternate; }
   @keyframes brillo { from { background-position: 0 0; } to { background-position: 0 100%; } }
-  #sello { position: absolute; top: 14px; left: 14px; border: 1px solid #fff; color: #fff; padding: 3px 8px; letter-spacing: .1em; opacity: 0; }
-  #vacio { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; background: #000; padding: 20px; }
-  #ley { min-height: 1.4em; text-align: center; padding: 0 10px; }
-  .hint { opacity: .45; font-size: 9px; letter-spacing: .1em; text-align: center; padding: 0 10px; }
+  .bar { display: flex; gap: 18px; align-items: center; }
+  #ley { min-width: 220px; text-align: center; letter-spacing: .08em; text-transform: uppercase; }
+  #ley b { display: block; color: #d8b45a; font-weight: normal; font-size: 14px; margin-bottom: 3px; }
+  .hint { opacity: .45; font-size: 9px; letter-spacing: .1em; text-align: center; padding: 0 12px; }
 </style>
 </head>
 <body>
-<div class="row" id="tabs"></div>
-<div id="card"><div class="gold"><i id="oro"></i></div><div id="sello"></div><div id="vacio"></div></div>
-<div id="ley"></div>
-<div class="row">
-  <button data-a="prev">←</button><button data-a="no">✕ NO</button><button data-a="si">✓ SÍ</button><button data-a="next">→</button>
-</div>
-<div class="row"><button data-a="png">EXPORTAR PNG</button><button id="enviar" disabled>VOTACIÓN CERRADA</button><button data-a="deshacer">DESHACER</button><button data-a="reiniciar">REINICIAR</button></div>
-<div class="hint">← → CAMBIAR DE TIPO · S SÍ · N NO · Z DESHACER · E EXPORTAR PNG · O ARRASTRA LA PORTADA</div>
+<div id="card"><div class="gold"><i id="oro"></i></div></div>
+<div class="bar"><button id="prev">←</button><div id="ley"></div><button id="next">→</button></div>
+<div class="hint">VOTACIÓN CERRADA · 20 PERSONAS · ORDENADAS DE MÁS A MENOS VOTADA</div>
 <script src="data.js"></script>
 <script>
-const KEY = "wiagb_elegir_titulo_02";
-const VISTAS = [["pendiente", "PENDIENTES"], ["si", "SÍ"], ["no", "NO"]];
-// estado: slug -> "si" | "no" (sin entrada = pendiente; pasar con la flecha la deja pendiente). historial: cada decisión con su hora, para ver la evolución
-let st = JSON.parse(localStorage.getItem(KEY) || "null") || { estado: {}, historial: [] };
-let vista = "pendiente", idx = 0;
-const $ = id => document.getElementById(id);
-const card = $("card"), oro = $("oro");
+// Resultado final de la votación (cerrada el 18/11/2026, 20 personas)
+const VOTOS = { "XXII Ultimate Black Metal": 13, "Old London": 12, "Chomsky": 9, "Deicide Remain": 7, "Disgrowl Carnage": 5,
+  "Something in the Grave Yard": 5, "Eater of Children": 5, "MB Lords Of Evil": 4, "Break Gothic": 3, "Anger Raven": 3,
+  "MB-Gothic Dawn": 2, "MB-Forever Raw": 2, "MB Graveyard Designs": 2 };
+const corto = n => n.replace(/, .*/, "");
+const L = FONTS.map(f => ({ ...f, v: VOTOS[corto(f.n)] || 0 })).sort((a, b) => b.v - a.v);
+let i = 0;
+const card = document.getElementById("card"), oro = document.getElementById("oro");
 card.style.backgroundImage = `url(${FOTO})`;
-const de = v => FONTS.filter(f => (st.estado[f.slug] || "pendiente") === v);
-const lista = () => de(vista);
-const actual = () => lista()[idx];
-
 function render() {
-  const l = lista();
-  idx = Math.max(0, Math.min(idx, l.length - 1));
-  $("tabs").innerHTML = VISTAS.map(([v, t]) => `<button data-v="${v}" class="${v === vista ? "on" : ""}">${t} ${de(v).length}</button>`).join("");
-  const f = l[idx];
-  $("vacio").style.display = f ? "none" : "flex";
-  $("vacio").textContent = f ? "" : "NO QUEDA NINGUNA EN " + VISTAS.find(x => x[0] === vista)[1];
-  oro.style.webkitMaskImage = oro.style.maskImage = f ? `url(${f.m})` : "none";
-  $("ley").textContent = f ? `${idx + 1}/${l.length} · ${f.n} · trazo fino ${f.t} %${f.l ? " · " + f.l : ""}` : "";
-  card.className = ""; card.style.transform = ""; card.style.opacity = 1; $("sello").style.opacity = 0;
+  const f = L[i];
+  oro.style.webkitMaskImage = oro.style.maskImage = `url(${f.m})`;
+  document.getElementById("ley").innerHTML = `<b>${i + 1}º · ${f.v} votos</b>${f.n.includes("cruz") ? "XXII con cruz invertida" : corto(f.n)}`;
 }
-function mover(d) { const n = lista().length; if (n) { idx = (idx + d + n) % n; render(); } }
-function decidir(a) {
-  const f = actual(); if (!f) return;
-  if (a === vista) return mover(1);                      // ya estaba ahí: solo pasa a la siguiente
-  st.historial.push({ t: new Date().toISOString(), slug: f.slug, nombre: f.n, antes: st.estado[f.slug] || "pendiente", ahora: a });
-  st.estado[f.slug] = a; localStorage.setItem(KEY, JSON.stringify(st)); programarEnvio();
-  card.className = "fly"; card.style.opacity = 0;
-  card.style.transform = a === "si" ? "translateX(60%) rotate(12deg)" : "translateX(-60%) rotate(-12deg)";
-  setTimeout(render, 230);                               // la lista se acorta, así que el mismo índice ya es la siguiente
-}
-function bajar(blob, nombre) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nombre; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
-const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src; });
-async function exportarPNG() {
-  const f = actual(); if (!f) return;
-  const [foto, m] = await Promise.all([img(FOTO), img(f.m)]), W = m.width, H = m.height;
-  const c = Object.assign(document.createElement("canvas"), { width: W, height: H }), x = c.getContext("2d");
-  const t = Object.assign(document.createElement("canvas"), { width: W, height: H }), y = t.getContext("2d");
-  const g = y.createLinearGradient(0, 0, W * .15, H);   // dorado fijo, con el reflejo a media altura
-  [[0, "#b8892f"], [.25, "#cda852"], [.42, "#f3dc9a"], [.5, "#fffbe6"], [.58, "#f3dc9a"], [.75, "#cda852"], [1, "#b8892f"]].forEach(([p, col]) => g.addColorStop(p, col));
-  y.fillStyle = g; y.fillRect(0, 0, W, H); y.globalCompositeOperation = "destination-in"; y.drawImage(m, 0, 0);
-  x.drawImage(foto, 0, 0, W, H); x.shadowColor = "rgba(0,0,0,.7)"; x.shadowOffsetY = 2; x.shadowBlur = 1.5; x.drawImage(t, 0, 0);
-  c.toBlob(b => bajar(b, `titulo_${f.slug}.png`), "image/png");
-}
-// lo que marca cada uno le llega a Fabián: se manda la selección entera a un canal de avisos (ntfy.sh)
-// ponytail: cada envío es la foto completa de esa persona; vale el último. Si hiciera falta histórico fiable, pasar a una base de datos
-const TEMA = "wiagb-titulo-981b9d30a3c3"; let tEnvio;
-async function enviar(aMano) { return;   // votación cerrada el 18/11
-  let q = localStorage.getItem(KEY + "_quien");
-  if (!q) { q = (prompt("¿Quién eres? Tu nombre, para saber de quién es la selección") || "").trim().slice(0, 40); if (!q) return; localStorage.setItem(KEY + "_quien", q); }
-  const n = v => de(v).map(f => f.n.replace(/, .*/, "")).join(", ") || "ninguna";
-  const cuerpo = { topic: TEMA, title: `${q} · ${FONTS.length} tipos`, message: `SÍ: ${n("si")}\nNO: ${n("no")}\nSin decidir: ${de("pendiente").length}` };
-  let ok = false; try { ok = (await fetch("https://ntfy.sh/", { method: "POST", body: JSON.stringify(cuerpo) })).ok; } catch {}
-  if (ok) localStorage.setItem(KEY + "_enviado", "1");
-  if (aMano) { $("enviar").textContent = ok ? "ENVIADO" : "NO SE HA PODIDO ENVIAR"; setTimeout(() => $("enviar").textContent = "ENVIAR MI SELECCIÓN", 2000); }
-}
-const programarEnvio = () => { clearTimeout(tEnvio); tEnvio = setTimeout(enviar, 5000); };   // 5 s después del último cambio
-const guardar = () => { localStorage.setItem(KEY, JSON.stringify(st)); programarEnvio(); };
-// deshace la última decisión y vuelve a enseñar ese tipo donde estaba
-function deshacer() {
-  const h = st.historial.pop(); if (!h) return;
-  if (h.antes === "pendiente") delete st.estado[h.slug]; else st.estado[h.slug] = h.antes;
-  guardar(); vista = h.antes; idx = Math.max(0, lista().findIndex(f => f.slug === h.slug)); render();
-}
-function reiniciar() {
-  if (!confirm("¿Borrar toda la selección y empezar de cero?")) return;
-  st = { estado: {}, historial: [] }; guardar(); vista = "pendiente"; idx = 0; render();
-}
-const ACC = { prev: () => mover(-1), next: () => mover(1), si: () => decidir("si"), no: () => decidir("no"), png: exportarPNG, enviar: () => enviar(true), deshacer, reiniciar };
-addEventListener("click", e => {
-  const b = e.target.closest("button"); if (!b) return;
-  if (b.dataset.v) { vista = b.dataset.v; idx = 0; render(); } else ACC[b.dataset.a]?.();
-});
-addEventListener("keydown", e => {
-  const k = { ArrowRight: "next", ArrowLeft: "prev", s: "si", n: "no", e: "png", z: "deshacer" }[e.key.length === 1 ? e.key.toLowerCase() : e.key];
-  if (k && !e.metaKey && !e.ctrlKey) { e.preventDefault(); ACC[k](); }
-});
-// arrastre tipo Tinder: derecha = sí, izquierda = no
+const mover = d => { i = (i + d + L.length) % L.length; render(); };
+document.getElementById("prev").onclick = () => mover(-1);
+document.getElementById("next").onclick = () => mover(1);
+addEventListener("keydown", e => { if (e.key === "ArrowRight") mover(1); if (e.key === "ArrowLeft") mover(-1); });
+// deslizar la portada a los lados también cambia
 let x0 = null;
-card.addEventListener("pointerdown", e => { if (actual()) { x0 = e.clientX; card.setPointerCapture(e.pointerId); card.className = ""; } });
-card.addEventListener("pointermove", e => {
-  if (x0 === null) return; const d = e.clientX - x0;
-  card.style.transform = `translateX(${d}px) rotate(${d / 25}deg)`;
-  $("sello").textContent = d > 0 ? "SÍ" : "NO"; $("sello").style.opacity = Math.min(1, Math.abs(d) / 90);
-});
-const soltar = e => {
-  if (x0 === null) return; const d = e.clientX - x0; x0 = null;
-  if (Math.abs(d) > 90) decidir(d > 0 ? "si" : "no"); else { card.className = "fly"; card.style.transform = ""; $("sello").style.opacity = 0; }
-};
-card.addEventListener("pointerup", soltar); card.addEventListener("pointercancel", soltar);
+card.addEventListener("pointerdown", e => { x0 = e.clientX; });
+card.addEventListener("pointerup", e => { if (x0 !== null && Math.abs(e.clientX - x0) > 40) mover(e.clientX < x0 ? 1 : -1); x0 = null; });
+for (const ev of ["contextmenu", "dragstart", "selectstart"]) addEventListener(ev, e => e.preventDefault());
 render();
-// quien ya había marcado cosas antes de este cambio: se manda al volver a abrir
-if (st.historial.length && !localStorage.getItem(KEY + "_enviado")) setTimeout(enviar, 1500);
 </script>
 <script src="../nav.js"></script>
 </body>
