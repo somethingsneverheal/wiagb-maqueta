@@ -3,14 +3,11 @@
 <title>WHO IS A GOOD BOY ? · vista 3D</title>
 <style>
   :root { --h: min(64vh, calc(19vw * 335 / 237)); --w: calc(var(--h) * 237 / 335); --d: calc(var(--w) * 6 / 237); }
-  @media (max-width: 760px) {
-    :root { --h: min(56vh, calc(60vw * 335 / 237)); }
-    .escena { flex-wrap: nowrap !important; justify-content: flex-start !important; align-content: normal !important; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory;
-              padding: 70px calc(50vw - var(--w) / 2) 60px !important; gap: 6vw !important; touch-action: pan-x !important; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-    .escena::-webkit-scrollbar { display: none; }
-    figure { flex: none; width: var(--w); scroll-snap-align: center; gap: 6vh; }
-    .hint { bottom: 22px; padding: 0 16px; }
-  }
+  @media (max-width: 760px) { :root { --h: min(56vh, calc(60vw * 335 / 237)); } }
+  /* Móvil: carrusel propio (sin scroll nativo, que en iPhone deforma el 3D): el dedo pasa de libro y lo gira mientras arrastras */
+  body.movil .escena { flex-wrap: nowrap; justify-content: flex-start; align-content: normal; gap: 6vw; padding: 70px 0 60px calc(50vw - var(--w) / 2); touch-action: none; will-change: transform; }
+  body.movil figure { flex: none; width: var(--w); gap: 6vh; }
+  body.movil .hint { bottom: 22px; padding: 0 16px; }
   html, body { margin: 0; height: 100%; background: #000; color: #bbb; font: 12px/1.4 Helvetica, Arial, sans-serif; overflow: hidden; user-select: none; -webkit-user-select: none; }
   .escena { height: 100%; box-sizing: border-box; padding-top: 70px; display: flex; flex-wrap: wrap; align-content: center; align-items: center; justify-content: center; gap: 5vh 4vw; touch-action: none; }
   figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 8vh; perspective: 1600px; }
@@ -52,7 +49,7 @@ const libros = [...document.querySelectorAll(".libro")];
 const ini = +(location.hash.match(/ry=(-?\d+)/) || [])[1] || -20;  // #ry=180 abre mirando la contra
 const B = libros.map(el => ({ el, by: ini, bx: 0, ry: ini, rx: 0, vy: 0, vx: 0 }));
 const lim = (v, a) => Math.max(-a, Math.min(a, v));
-let mx = -1e4, my = -1e4, drag = null, gy = 0, gx = 0;
+let mx = -1e4, my = -1e4, drag = null, gy = 0, gx = 0, dedo = 0;  // dedo: giro extra del libro del centro al arrastrar en el móvil
 const FIJO = (location.hash.match(/fijo=(-?[\d.]+),(-?[\d.]+)/) || []).slice(1).map(Number);  // #fijo=170,8 para comprobar: sin ratón
 if (FIJO.length) B.forEach(b => { b.by = b.ry = FIJO[0]; b.bx = b.rx = FIJO[1]; });
 addEventListener("pointermove", e => {
@@ -76,21 +73,33 @@ addEventListener("pointerleave", () => { mx = my = -1e4; });
     if (drag?.b !== b && (Math.abs(b.vy) > .01 || Math.abs(b.vx) > .01)) { b.by += b.vy; b.bx = lim(b.bx + b.vx, 60); b.vy *= .93; b.vx *= .9; }  // inercia al soltar
     const r = b.el.parentElement.getBoundingClientRect(), h = b.el.offsetHeight, cx = r.left + r.width / 2, cy = r.top + h / 2;
     const nx = (mx - cx) / (r.width / 2), ny = (my - cy) / (h / 2), w = Math.max(0, 1 - Math.hypot(nx * .7, ny * .5) / 1.9);  // cerca = 1, lejos = 0
-    const ty = b.by + lim(nx, 1.4) * 130 * w + gy, tx = b.bx - lim(ny, 1.2) * 22 * w + gx, k = drag?.b === b ? .3 : .045;
+    const ty = b.by + lim(nx, 1.4) * 130 * w + gy + (b.esCentro && b.esCentro() ? dedo : 0), tx = b.bx - lim(ny, 1.2) * 22 * w + gx, k = drag?.b === b ? .3 : .045;
     b.ry += (ty - b.ry) * k; b.rx += (tx - b.rx) * k;
     b.el.style.transform = `rotateX(${b.rx.toFixed(2)}deg) rotateY(${b.ry.toFixed(2)}deg)`;
   }
   requestAnimationFrame(anim);
 })();
 if ("ontouchstart" in window) {
-  // Móvil: uno a uno deslizando; la inclinación del móvil inclina los libros (en iPhone hay que tocar una vez para dar permiso)
-  const txt = document.getElementById("txt"); let base = null;
-  txt.textContent = "DESLIZA PARA VER EL SIGUIENTE · INCLINA EL MÓVIL PARA GIRAR LOS LIBROS";
-  const mover = e => { if (e.gamma == null) return; if (base === null) base = e.beta;
-    gy = lim(e.gamma, 50) * 1.6; gx = lim((e.beta - base) * .7, 25); };
-  const activar = async () => { try { if (window.DeviceOrientationEvent && DeviceOrientationEvent.requestPermission && await DeviceOrientationEvent.requestPermission() !== "granted") return; } catch (_) { return; }
-    addEventListener("deviceorientation", mover); removeEventListener("touchend", activar); };
-  if (window.DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) { txt.textContent = "TOCA LA PANTALLA PARA QUE LOS LIBROS SIGAN EL MÓVIL · DESLIZA PARA VER EL SIGUIENTE"; addEventListener("touchend", activar); }
-  else addEventListener("deviceorientation", mover);
+  document.body.classList.add("movil");
+  const esc = document.getElementById("escena"), figs = [...esc.children], txt = document.getElementById("txt");
+  let idx = 0, x0 = 0, y0 = 0, dx = 0, eje = null, base = null;
+  const paso = () => figs[1].offsetLeft - figs[0].offsetLeft;
+  const colocar = anim => { esc.style.transition = anim ? "transform .45s cubic-bezier(.2,.8,.2,1)" : "none"; esc.style.transform = `translateX(${-idx * paso() + dx}px)`; };
+  esc.addEventListener("touchstart", e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; dx = 0; eje = null; }, { passive: true });
+  esc.addEventListener("touchmove", e => {
+    const t = e.touches[0], mx = t.clientX - x0, my = t.clientY - y0;
+    if (!eje && Math.hypot(mx, my) > 8) eje = Math.abs(mx) > Math.abs(my) ? "x" : "y";
+    if (eje !== "x") return;
+    e.preventDefault(); dx = (idx === 0 && mx > 0) || (idx === figs.length - 1 && mx < 0) ? mx * .35 : mx;
+    dedo = lim(mx * .5, 80); colocar(false);
+  }, { passive: false });
+  esc.addEventListener("touchend", () => { if (dx < -50 && idx < figs.length - 1) idx++; else if (dx > 50 && idx > 0) idx--; dx = 0; dedo = 0; colocar(true); });
+  addEventListener("resize", () => colocar(false));
+  // Inclinación del móvil: solo donde no pide permiso (Android). En iPhone Safari siempre lo pide, así que ahí se gira con el dedo.
+  txt.textContent = "DESLIZA PARA PASAR DE LIBRO · EL LIBRO GIRA MIENTRAS LO ARRASTRAS";
+  if (!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function"))
+    addEventListener("deviceorientation", e => { if (e.gamma == null) return; if (base === null) base = e.beta; gy = -lim(e.gamma, 50) * 1.6; gx = -lim((e.beta - base) * .7, 25); });
+  colocar(false);
+  B.forEach((b, i) => b.esCentro = () => i === idx);
 }
 </script></body></html>
