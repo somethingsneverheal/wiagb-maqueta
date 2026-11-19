@@ -32,17 +32,7 @@
   @keyframes brillo { from { background-position: 0 0; } to { background-position: 0 100%; } }
   .hint { position: fixed; bottom: 14px; left: 0; right: 0; text-align: center; opacity: .45; font-size: 9px; letter-spacing: .1em; }
 </style></head><body>
-<script>
-// ?debug: muestra en pantalla lo que pasa en el móvil (errores, toques, giro) para poder arreglarlo a distancia
-if (location.search.includes("debug")) {
-  const d = document.createElement("pre"); d.style.cssText = "position:fixed;left:0;right:0;top:80px;z-index:99999;margin:0;padding:8px;font:11px/1.3 monospace;color:#0f0;background:rgba(0,0,0,.8);white-space:pre-wrap";
-  document.addEventListener("DOMContentLoaded", () => document.body.appendChild(d));
-  window.DBG = {}; const pinta = () => { d.textContent = Object.entries(DBG).map(([k, v]) => k + ": " + v).join("\n"); };
-  window.dbg = (k, v) => { DBG[k] = v; pinta(); };
-  window.onerror = (m, f, l) => dbg("ERROR", m + " (línea " + l + ")");
-  ["touchstart", "touchmove", "touchend"].forEach(t => addEventListener(t, () => dbg(t, (DBG[t] || 0) + 1), { passive: true }));
-} else window.dbg = () => {};
-</script>
+<script>window.dbg = () => {};</script>
 <div class="escena" id="escena"></div>
 <div class="hint"><span id="txt">PASA EL RATÓN CERCA DE UN LIBRO · ARRÁSTRALO PARA GIRARLO Y VER LA CONTRA · DOBLE CLIC LO VUELVE DE FRENTE</span></div>
 <script src="../nav.js"></script>
@@ -61,10 +51,8 @@ const ini = +(location.hash.match(/ry=(-?\d+)/) || [])[1] || -20;  // #ry=180 ab
 const B = libros.map(el => ({ el, by: ini, bx: 0, ry: ini, rx: 0, vy: 0, vx: 0 }));
 const lim = (v, a) => Math.max(-a, Math.min(a, v));
 let mx = -1e4, my = -1e4, drag = null, gy = 0, gx = 0, dedo = 0;  // dedo: giro extra del libro del centro al arrastrar en el móvil
-const FIJO = (location.hash.match(/fijo=(-?[\d.]+),(-?[\d.]+)/) || []).slice(1).map(Number);  // #fijo=170,8 para comprobar: sin ratón
-if (FIJO.length) B.forEach(b => { b.by = b.ry = FIJO[0]; b.bx = b.rx = FIJO[1]; });
 addEventListener("pointermove", e => {
-  if (FIJO.length || e.pointerType === "touch") return;
+  if (e.pointerType === "touch") return;
   mx = e.clientX; my = e.clientY;
   if (!drag) return;
   const b = drag.b, dy = (e.clientX - drag.x) * .45, dx = -(e.clientY - drag.y) * .3;
