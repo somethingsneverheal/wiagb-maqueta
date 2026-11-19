@@ -100,20 +100,22 @@ if ("ontouchstart" in window) {
   const colocar = anim => { esc.style.transition = anim ? "transform .45s cubic-bezier(.2,.8,.2,1)" : "none"; esc.style.transform = `translateX(${-idx * paso() + dx}px)`; };
   // Dedo: si empiezas sobre el libro del centro, lo giras (con inercia); si empiezas fuera o sobre los de los lados, pasas de libro.
   // Un toque en el libro de al lado lo trae al centro.
-  let modo = null, tocado = -1, ultX = 0;
-  esc.addEventListener("touchstart", e => { const t = e.touches[0], f = e.target.closest("figure"); x0 = ultX = t.clientX; y0 = t.clientY; dx = 0; eje = null;
+  let modo = null, tocado = -1, ultX = 0, ultY = 0, vert = 0;
+  esc.addEventListener("touchstart", e => { const t = e.touches[0], f = e.target.closest("figure"); x0 = ultX = t.clientX; y0 = ultY = t.clientY; dx = 0; eje = null; vert = 0;
     tocado = f ? figs.indexOf(f) : -1; modo = tocado === idx ? "girar" : "pasar";
     if (modo === "girar") { drag = { b: B[idx] }; B[idx].vy = B[idx].vx = 0; } }, { passive: true });
   esc.addEventListener("touchmove", e => {
     const t = e.touches[0], mx = t.clientX - x0, my = t.clientY - y0;
     if (!eje && Math.hypot(mx, my) > 8) eje = Math.abs(mx) > Math.abs(my) ? "x" : "y";
     if (!eje) return; e.preventDefault();
-    if (modo === "girar") { const b = B[idx], d = (t.clientX - ultX) * .6; b.by += d; b.vy = d; ultX = t.clientX; dbg("giro dedo", Math.round(b.by)); return; }
+    if (modo === "girar") { const b = B[idx], d = (t.clientX - ultX) * .6; b.by += d; b.vy = d; ultX = t.clientX;
+      vert += t.clientY - ultY; ultY = t.clientY; b.bx = -28 * Math.tanh(vert / 120); b.vx = 0;  // arriba-abajo: poco y con tope suave
+      dbg("giro dedo", Math.round(b.by) + " / " + Math.round(b.bx)); return; }
     if (eje !== "x") return;
     dx = (idx === 0 && mx > 0) || (idx === figs.length - 1 && mx < 0) ? mx * .35 : mx; colocar(false); dbg("dx", Math.round(dx) + " idx " + idx);
   }, { passive: false });
   esc.addEventListener("touchend", () => {
-    if (modo === "girar") drag = null;
+    if (modo === "girar") { drag = null; B[idx].bx = 0; }  // al soltar, la inclinación vertical vuelve suave
     else if (!eje && tocado >= 0 && tocado !== idx) idx = tocado;  // toque en el de al lado
     else if (dx < -50 && idx < figs.length - 1) idx++; else if (dx > 50 && idx > 0) idx--;
     dx = 0; modo = null; colocar(true);
