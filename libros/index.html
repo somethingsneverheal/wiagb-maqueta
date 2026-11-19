@@ -83,7 +83,6 @@ addEventListener("pointerleave", () => { mx = my = -1e4; });
     const f = b.esCentro && !b.esCentro() ? .3 : 1;  // en el móvil, los de los lados siguen la inclinación más flojo
     const ty = b.by + lim(nx, 1.4) * 130 * w + gy * f, tx = b.bx - lim(ny, 1.2) * 22 * w + gx * f, k = drag?.b === b ? .3 : .045;
     b.ry += (ty - b.ry) * k; b.rx += (tx - b.rx) * k;
-    if (b.esCentro && b.esCentro())
     b.el.style.transform = `rotateX(${b.rx.toFixed(2)}deg) rotateY(${b.ry.toFixed(2)}deg)`;
   }
   requestAnimationFrame(anim);
