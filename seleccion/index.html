@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>elegir título 02</title>
+<title>WHO IS A GOOD BOY ? · títulos</title>
 <style>
-  :root { --h: min(calc(100dvh - 190px), 128vw); --w: calc(var(--h) * 237 / 335); }
+  :root { --h: min(calc(100dvh - 250px), 128vw); --w: calc(var(--h) * 237 / 335); }
   * { box-sizing: border-box; }
   body { margin: 0; height: 100dvh; overflow: hidden; background: #000; color: #bbb; font: 12px/1.4 Helvetica, Arial, sans-serif;
-         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding-top: 56px; box-sizing: border-box;
          user-select: none; -webkit-user-select: none; }
   button { background: none; border: 1px solid #555; color: #ddd; padding: 7px 14px; cursor: pointer; font: inherit; letter-spacing: .06em; }
   button:hover, button.on { border-color: #ddd; color: #fff; }
@@ -135,5 +135,6 @@ render();
 // quien ya había marcado cosas antes de este cambio: se manda al volver a abrir
 if (st.historial.length && !localStorage.getItem(KEY + "_enviado")) setTimeout(enviar, 1500);
 </script>
+<script src="../nav.js"></script>
 </body>
 </html>

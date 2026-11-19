@@ -56,7 +56,6 @@
 </style>
 </head>
 <body>
-<a class="logo" href="index.html">WHO IS A GOOD BOY ?</a>
 <div class="book closed" id="book"></div>
 <div class="bar">
   <button id="prev">←</button><span id="pg"></span><button id="next">→</button>
@@ -165,5 +164,6 @@ addEventListener("keydown", e => { if (e.key === "ArrowRight") go(1); if (e.key 
 for (const ev of ["contextmenu", "dragstart", "selectstart"]) addEventListener(ev, e => e.preventDefault());
 render(); L.forEach(p => p.t0 = -1e9); frame();
 </script>
+<script src="nav.js"></script>
 </body>
 </html>

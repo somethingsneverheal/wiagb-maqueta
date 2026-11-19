@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WHO IS A GOOD BOY ? · vista 3D</title>
+<style>
+  :root { --h: min(64vh, calc(19vw * 335 / 237)); --w: calc(var(--h) * 237 / 335); --d: calc(var(--w) * 6 / 237); }
+  @media (max-width: 760px) { :root { --h: min(30vh, calc(36vw * 335 / 237)); } }
+  html, body { margin: 0; height: 100%; background: #000; color: #bbb; font: 12px/1.4 Helvetica, Arial, sans-serif; overflow: hidden; user-select: none; -webkit-user-select: none; }
+  .escena { height: 100%; box-sizing: border-box; padding-top: 70px; display: flex; flex-wrap: wrap; align-content: center; align-items: center; justify-content: center; gap: 5vh 4vw; touch-action: none; }
+  figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 8vh; perspective: 1600px; }
+  figcaption { text-align: center; letter-spacing: .12em; text-transform: uppercase; font-size: 10px; color: #888; }
+  figcaption b { display: block; color: #d8b45a; font-size: 15px; margin-bottom: 5px; }
+  .libro { position: relative; width: var(--w); height: var(--h); transform-style: preserve-3d; }
+  .cara { position: absolute; top: 0; left: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background-position: center; background-size: cover; background-repeat: no-repeat; }
+  .delante, .detras { width: var(--w); height: var(--h); }
+  .delante { transform: translateZ(calc(var(--d) / 2)); }
+  .detras { background-image: url(contra.jpg); transform: rotateY(180deg) translateZ(calc(var(--d) / 2)); }
+  .lomo, .canto { width: var(--d); height: var(--h); left: calc(50% - var(--d) / 2); }
+  .lomo { background-image: url(lomo.jpg); transform: rotateY(-90deg) translateZ(calc(var(--w) / 2)); }
+  .canto { background-image: repeating-linear-gradient(90deg, #e9e5dc 0 1px, #cfcac0 1px 2px); transform: rotateY(90deg) translateZ(calc(var(--w) / 2)); }
+  .arriba, .abajo { width: var(--w); height: var(--d); top: calc(50% - var(--d) / 2); background-image: repeating-linear-gradient(0deg, #e9e5dc 0 1px, #cfcac0 1px 2px); }
+  .arriba { transform: rotateX(90deg) translateZ(calc(var(--h) / 2)); }
+  .abajo { transform: rotateX(-90deg) translateZ(calc(var(--h) / 2)); }
+  /* mismo dorado que Títulos y la maqueta (2.º a 4.º se pintan así, con el título al tamaño de la prueba v2 de Jeric) */
+  .gold { position: absolute; inset: 0; pointer-events: none; filter: drop-shadow(0 1.2px .6px rgba(0,0,0,.75)) drop-shadow(0 -.6px 0 rgba(255,240,190,.55)); }
+  .gold i { position: absolute; inset: 0; -webkit-mask: center/100% 100% no-repeat; mask: center/100% 100% no-repeat;
+            background: linear-gradient(170deg, #b8892f 0%, #cda852 30%, #f3dc9a 42%, #fffbe6 50%, #f3dc9a 58%, #cda852 70%, #b8892f 100%);
+            background-size: 100% 250%; animation: brillo 4.5s ease-in-out infinite alternate; }
+  @keyframes brillo { from { background-position: 0 0; } to { background-position: 0 100%; } }
+  .hint { position: fixed; bottom: 14px; left: 0; right: 0; text-align: center; opacity: .45; font-size: 9px; letter-spacing: .1em; }
+  #giro { display: none; background: none; border: 1px solid #555; color: #ddd; padding: 6px 12px; font: inherit; letter-spacing: .06em; margin-top: 8px; }
+</style></head><body>
+<div class="escena" id="escena"></div>
+<div class="hint"><span id="txt">PASA EL RATÓN CERCA DE UN LIBRO · ARRÁSTRALO PARA GIRARLO Y VER LA CONTRA · DOBLE CLIC LO VUELVE DE FRENTE</span><br><button id="giro">GIRAR MOVIENDO EL MÓVIL</button></div>
+<script src="../nav.js"></script>
+<script src="mascaras.js"></script>
+<script>
+// Top 4 de la votación del título (20 personas, cerrada el 18/11/2026). Tapa 237 × 335 mm, lomo 6 mm.
+// Contra y lomo sacados del PDF de imprenta del 2/11 (aproximación hasta tener el pliego final).
+const TOP = [["1_xxii_cruz.jpg", "XXII con cruz invertida", 13], ["2_old_london_mascara.png", "Old London", 12], ["3_chomsky_mascara.png", "Chomsky", 9], ["4_deicide_remain_mascara.png", "Deicide Remain", 7]];
+const portada = img => img.includes("mascara") ? `style="background-image:url(foto.jpg)"><div class="gold"><i style="-webkit-mask-image:url(${MASCARAS[img]});mask-image:url(${MASCARAS[img]})"></i></div>` : `style="background-image:url(${img})">`;
+document.getElementById("escena").innerHTML = TOP.map(([img, n, v], i) =>
+  `<figure><div class="libro"><div class="cara delante" ${portada(img)}</div><div class="cara detras"></div><div class="cara lomo"></div><div class="cara canto"></div><div class="cara arriba"></div><div class="cara abajo"></div></div><figcaption><b>${i + 1}º</b>${n} · ${v} votos</figcaption></figure>`).join("");
+const libros = [...document.querySelectorAll(".libro")];
+// Cada libro va por su cuenta: se inclina hacia el ratón solo si pasas cerca; arrastrando con clic (o el dedo) lo giras entero
+// y se queda en esa posición (doble clic lo vuelve de frente). Todo suavizado.
+const ini = +(location.hash.match(/ry=(-?\d+)/) || [])[1] || -20;  // #ry=180 abre mirando la contra
+const B = libros.map(el => ({ el, by: ini, bx: 0, ry: ini, rx: 0, vy: 0, vx: 0 }));
+const lim = (v, a) => Math.max(-a, Math.min(a, v));
+let mx = -1e4, my = -1e4, drag = null, gy = 0, gx = 0;
+const FIJO = (location.hash.match(/fijo=(-?[\d.]+),(-?[\d.]+)/) || []).slice(1).map(Number);  // #fijo=170,8 para comprobar: sin ratón
+if (FIJO.length) B.forEach(b => { b.by = b.ry = FIJO[0]; b.bx = b.rx = FIJO[1]; });
+addEventListener("pointermove", e => {
+  if (FIJO.length) return;
+  mx = e.clientX; my = e.clientY;
+  if (!drag) return;
+  const b = drag.b, dy = (e.clientX - drag.x) * .45, dx = -(e.clientY - drag.y) * .3;
+  b.by += dy; b.bx = lim(b.bx + dx, 60); b.vy = dy; b.vx = dx; drag.x = e.clientX; drag.y = e.clientY;
+});
+B.forEach(b => {
+  const fig = b.el.parentElement;
+  fig.addEventListener("pointerdown", e => { drag = { b, x: e.clientX, y: e.clientY }; b.vy = b.vx = 0; fig.setPointerCapture(e.pointerId); fig.style.cursor = "grabbing"; });
+  fig.addEventListener("pointerup", () => { drag = null; fig.style.cursor = "grab"; });
+  fig.addEventListener("pointercancel", () => { drag = null; });
+  fig.addEventListener("dblclick", () => { b.by = ini; b.bx = 0; b.vy = b.vx = 0; });
+  fig.style.cursor = "grab";
+});
+addEventListener("pointerleave", () => { mx = my = -1e4; });
+(function anim() {
+  for (const b of B) {
+    if (drag?.b !== b && (Math.abs(b.vy) > .01 || Math.abs(b.vx) > .01)) { b.by += b.vy; b.bx = lim(b.bx + b.vx, 60); b.vy *= .93; b.vx *= .9; }  // inercia al soltar
+    const r = b.el.parentElement.getBoundingClientRect(), h = b.el.offsetHeight, cx = r.left + r.width / 2, cy = r.top + h / 2;
+    const nx = (mx - cx) / (r.width / 2), ny = (my - cy) / (h / 2), w = Math.max(0, 1 - Math.hypot(nx * .7, ny * .5) / 1.9);  // cerca = 1, lejos = 0
+    const ty = b.by + lim(nx, 1.4) * 110 * w + gy, tx = b.bx - lim(ny, 1.2) * 22 * w + gx, k = drag?.b === b ? .3 : .045;
+    b.ry += (ty - b.ry) * k; b.rx += (tx - b.rx) * k;
+    b.el.style.transform = `rotateX(${b.rx.toFixed(2)}deg) rotateY(${b.ry.toFixed(2)}deg)`;
+  }
+  requestAnimationFrame(anim);
+})();
+if ("ontouchstart" in window) {
+  document.getElementById("txt").textContent = "ARRASTRA UN LIBRO CON EL DEDO PARA GIRARLO · DOBLE TOQUE LO VUELVE DE FRENTE";
+  const bt = document.getElementById("giro"); bt.style.display = "inline-block";
+  bt.onclick = async () => { try { if (window.DeviceOrientationEvent && DeviceOrientationEvent.requestPermission && await DeviceOrientationEvent.requestPermission() !== "granted") return;
+    addEventListener("deviceorientation", e => { if (e.gamma == null) return; gy = lim(e.gamma, 45) * 1.2; gx = lim((e.beta - 45) * .5, 20); }); bt.textContent = "MOVIENDO CON EL MÓVIL"; } catch (_) {} };
+}
+</script></body></html>
