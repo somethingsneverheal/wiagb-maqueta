@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WHO IS A GOOD BOY ? · pósters</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#000000">
+<meta property="og:type" content="website">
+<meta property="og:title" content="WHO IS A GOOD BOY ? · pósters">
+<meta property="og:description" content="La preselección de pósters con cada tipografía del título.">
+<meta property="og:url" content="https://somethingsneverheal.github.io/wiagb-maqueta/posters/">
+<meta property="og:image" content="https://somethingsneverheal.github.io/wiagb-maqueta/og.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; color: #bbb; font: 12px/1.4 Helvetica, Arial, sans-serif; padding: 84px 20px 110px;
+         user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  @media (max-width: 760px) { body { padding: 96px 10px 110px; } }
+  /* cuadrícula de pósters A3 apaisados, como los de Jeric */
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 14px; max-width: 1800px; margin: 0 auto; }
+  .p { position: relative; aspect-ratio: 420 / 297; background: #141210 center/cover; container-type: inline-size; overflow: hidden; }
+  .p span { position: absolute; left: 0; right: 0; text-align: center; color: #fff; white-space: nowrap;
+            font: 1.6cqw/1 "Helvetica Neue", Helvetica, Arial, sans-serif; letter-spacing: .02em; }
+  .p .a { top: 3.2cqw; } .p .b { bottom: 3.2cqw; }
+  .p i { position: absolute; left: 11%; right: 11%; top: 50%; transform: translateY(-50%); aspect-ratio: var(--r);
+         background: center/100% 100% no-repeat; }
+  /* barra fija abajo: flechas y tipografía actual */
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; gap: 18px; align-items: center; justify-content: center;
+         padding: 14px 10px 18px; background: linear-gradient(transparent, #000 45%); }
+  button { background: #000; border: 1px solid #555; color: #ddd; padding: 7px 16px; cursor: pointer; font: inherit; letter-spacing: .08em; }
+  button:hover { border-color: #ddd; }
+  #ley { min-width: 230px; text-align: center; letter-spacing: .08em; text-transform: uppercase; }
+  #ley b { display: block; color: #d8b45a; font-weight: normal; font-size: 14px; margin-bottom: 3px; }
+</style>
+</head>
+<body>
+<div id="grid"></div>
+<div class="bar"><button id="prev">←</button><div id="ley"></div><button id="next">→</button></div>
+<script src="titulos.js"></script>
+<script>
+// mismo orden y votos que la página de Títulos (votación cerrada el 18/11/2026, 20 personas)
+const VOTOS = { "XXII Ultimate Black Metal": 13, "Old London": 12, "Chomsky": 9, "Deicide Remain": 7, "Disgrowl Carnage": 5,
+  "Something in the Grave Yard": 5, "Eater of Children": 5, "MB Lords Of Evil": 4, "Break Gothic": 3, "Anger Raven": 3,
+  "MB-Gothic Dawn": 2, "MB-Forever Raw": 2, "MB Graveyard Designs": 2 };
+const INFO = "JETAIMEPOURTOUJOURS · BOOK LAUNCH · 20 OCTOBER · 18-21H · TERRANOVA · COMTE BORRELL 99 · BARCELONA";
+const FOTOS = 20;
+const corto = n => n.replace(/, .*/, "");
+const L = TITULOS.map(f => ({ ...f, v: VOTOS[corto(f.n)] || 0 })).sort((a, b) => b.v - a.v);
+// proporción de cada título para que la caja mida lo mismo que la imagen
+const R = {}; L.forEach(f => { const im = new Image(); im.onload = () => { R[f.slug] = im.width / im.height; if (f === L[i]) render(); }; im.src = `t/${f.slug}.png`; });
+const grid = document.getElementById("grid");
+grid.innerHTML = Array.from({ length: FOTOS }, (_, k) =>
+  `<div class="p" style="background-image:url(f/${String(k + 1).padStart(2, "0")}.jpg)"><span class="a">${INFO}</span><i></i><span class="b">${INFO}</span></div>`).join("");
+let i = 0;
+function render() {
+  const f = L[i];
+  grid.style.setProperty("--r", R[f.slug] || 6);
+  for (const t of grid.querySelectorAll("i")) t.style.backgroundImage = `url(t/${f.slug}.png)`;
+  document.getElementById("ley").innerHTML = `<b>${i + 1}º · ${f.v} votos</b>${f.n.includes("cruz") ? "XXII con cruz invertida" : corto(f.n)}`;
+}
+const mover = d => { i = (i + d + L.length) % L.length; render(); };
+document.getElementById("prev").onclick = () => mover(-1);
+document.getElementById("next").onclick = () => mover(1);
+addEventListener("keydown", e => { if (e.key === "ArrowRight") mover(1); if (e.key === "ArrowLeft") mover(-1); });
+// deslizar a los lados también cambia (en vertical se sigue pudiendo bajar por la cuadrícula)
+let x0 = null, y0 = 0;
+addEventListener("touchstart", e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+addEventListener("touchend", e => {
+  if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) mover(dx < 0 ? 1 : -1);
+});
+for (const ev of ["contextmenu", "dragstart"]) addEventListener(ev, e => e.preventDefault());
+render();
+</script>
+<script src="../nav.js"></script>
+</body>
+</html>
