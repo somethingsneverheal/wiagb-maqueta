@@ -15,12 +15,14 @@
 <meta name="twitter:card" content="summary_large_image">
 <style>
   * { box-sizing: border-box; }
+  /* la barra de scroll vertical siempre puesta: al cambiar de columnas el ancho no salta y nunca sale barra horizontal */
+  html { overflow-x: hidden; overflow-y: scroll; }
   body { margin: 0; background: #000; color: #bbb; font: 12px/1.4 Helvetica, Arial, sans-serif; padding: 84px 20px 150px;
          user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   @media (max-width: 760px) { body { padding: 96px 10px 150px; } }
   /* cuadrícula de pósters A3 apaisados, como los de Jeric */
   /* columnas según el slider (ver cuadricula() abajo) */
-  #grid { display: grid; grid-template-columns: repeat(var(--c, 4), 1fr); gap: var(--g, 14px); max-width: var(--mw, 1800px); margin: 0 auto; }
+  #grid { display: grid; grid-template-columns: repeat(var(--c, 4), minmax(0, 1fr)); gap: var(--g, 14px); max-width: var(--mw, 1800px); margin: 0 auto; }
   .p { position: relative; aspect-ratio: 420 / 297; background: #141210 center/cover; container-type: inline-size; overflow: hidden; }
   .p span { position: absolute; left: 0; right: 0; text-align: center; color: #fff; white-space: nowrap;
             font: 1.6cqw/1 "Helvetica Neue", Helvetica, Arial, sans-serif; letter-spacing: .02em; }
@@ -87,7 +89,7 @@ function cuadricula() {
   const H = innerHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
   grid.style.setProperty("--c", c); grid.style.setProperty("--g", g + "px");
   const n = Math.floor(FOTOS / c) * c, filas = c == rango.max ? n / c : 1;   // una fila nunca más alta que la pantalla; en el último paso, todas
-  grid.style.setProperty("--mw", Math.min(1800, c * (H - g * (filas - 1)) / filas * 420 / 297 + g * (c - 1)) + "px");
+  grid.style.setProperty("--mw", Math.min(1800, c * (H - 4 - g * (filas - 1)) / filas * 420 / 297 + g * (c - 1)) + "px");
   [...grid.children].forEach((p, k) => p.hidden = k >= n);
   document.getElementById("nc").textContent = c;
 }
