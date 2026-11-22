@@ -46,9 +46,9 @@
 <script src="../nav.js"></script>
 <script src="mascaras.js"></script>
 <script>
-// Top 4 de la votación del título (20 personas, cerrada el 18/11/2026). Tapa 237 × 335 mm, lomo 6 mm.
+// Top 3 de la votación del título (20 personas, cerrada el 18/11/2026). Tapa 237 × 335 mm, lomo 6 mm.
 // Contra y lomo sacados del PDF de imprenta del 2/11 (aproximación hasta tener el pliego final).
-const TOP = [["1_xxii_cruz.jpg", "XXII con cruz invertida", 13], ["2_old_london_mascara.png", "Old London", 12], ["3_chomsky_mascara.png", "Chomsky", 9], ["4_deicide_remain_mascara.png", "Deicide Remain", 7]];
+const TOP = [["2_old_london_mascara.png", "Old London", 12], ["3_chomsky_mascara.png", "Chomsky", 9], ["4_deicide_remain_mascara.png", "Deicide Remain", 7]];
 const portada = img => img.includes("mascara") ? `style="background-image:url(foto.jpg)"><div class="gold"><i style="-webkit-mask-image:url(${MASCARAS[img]});mask-image:url(${MASCARAS[img]})"></i></div>` : `style="background-image:url(${img})">`;
 document.getElementById("escena").innerHTML = TOP.map(([img, n, v], i) =>
   `<figure><div class="libro"><div class="cara delante" ${portada(img)}</div><div class="cara detras"></div><div class="cara lomo"></div><div class="cara canto"></div><div class="cara arriba"></div><div class="cara abajo"></div></div><figcaption><b>${i + 1}º</b>${n} · ${v} votos</figcaption></figure>`).join("");

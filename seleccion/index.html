@@ -44,7 +44,7 @@
 <script src="data.js"></script>
 <script>
 // Resultado final de la votación (cerrada el 18/11/2026, 20 personas)
-const VOTOS = { "XXII Ultimate Black Metal": 13, "Old London": 12, "Chomsky": 9, "Deicide Remain": 7, "Disgrowl Carnage": 5,
+const VOTOS = { "Old London": 12, "Chomsky": 9, "Deicide Remain": 7, "Disgrowl Carnage": 5,
   "Something in the Grave Yard": 5, "Eater of Children": 5, "MB Lords Of Evil": 4, "Break Gothic": 3, "Anger Raven": 3,
   "MB-Gothic Dawn": 2, "MB-Forever Raw": 2, "MB Graveyard Designs": 2 };
 const corto = n => n.replace(/, .*/, "");
@@ -55,7 +55,7 @@ card.style.backgroundImage = `url(${FOTO})`;
 function render() {
   const f = L[i];
   oro.style.webkitMaskImage = oro.style.maskImage = `url(${f.m})`;
-  document.getElementById("ley").innerHTML = `<b>${i + 1}º · ${f.v} votos</b>${f.n.includes("cruz") ? "XXII con cruz invertida" : corto(f.n)}`;
+  document.getElementById("ley").innerHTML = `<b>${i + 1}º · ${f.v} votos</b>${corto(f.n)}`;
 }
 const mover = d => { i = (i + d + L.length) % L.length; render(); };
 document.getElementById("prev").onclick = () => mover(-1);

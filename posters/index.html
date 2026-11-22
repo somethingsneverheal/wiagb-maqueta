@@ -49,7 +49,7 @@
 <script src="titulos.js"></script>
 <script>
 // mismo orden y votos que la página de Títulos (votación cerrada el 18/11/2026, 20 personas)
-const VOTOS = { "XXII Ultimate Black Metal": 13, "Old London": 12, "Chomsky": 9, "Deicide Remain": 7, "Disgrowl Carnage": 5,
+const VOTOS = { "Old London": 12, "Chomsky": 9, "Deicide Remain": 7, "Disgrowl Carnage": 5,
   "Something in the Grave Yard": 5, "Eater of Children": 5, "MB Lords Of Evil": 4, "Break Gothic": 3, "Anger Raven": 3,
   "MB-Gothic Dawn": 2, "MB-Forever Raw": 2, "MB Graveyard Designs": 2 };
 const INFO = "JETAIMEPOURTOUJOURS · BOOK LAUNCH · 20 OCTOBER · 18-21H · TERRANOVA · COMTE BORRELL 99 · BARCELONA";
@@ -66,7 +66,7 @@ function render() {
   const f = L[i];
   grid.style.setProperty("--r", R[f.slug] || 6);
   for (const t of grid.querySelectorAll("i")) t.style.backgroundImage = `url(t/${f.slug}.png)`;
-  document.getElementById("ley").innerHTML = `<b>${i + 1}º · ${f.v} votos</b>${f.n.includes("cruz") ? "XXII con cruz invertida" : corto(f.n)}`;
+  document.getElementById("ley").innerHTML = `<b>${i + 1}º · ${f.v} votos</b>${corto(f.n)}`;
 }
 const mover = d => { i = (i + d + L.length) % L.length; render(); };
 document.getElementById("prev").onclick = () => mover(-1);
