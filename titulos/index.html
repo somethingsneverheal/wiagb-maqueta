@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WHO IS A GOOD BOY ? · títulos</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#000000">
+<meta property="og:type" content="website">
+<meta property="og:title" content="WHO IS A GOOD BOY ? · títulos">
+<meta property="og:description" content="La nueva selección de tipografías para el título, sobre la portada.">
+<meta property="og:url" content="https://somethingsneverheal.github.io/wiagb-maqueta/titulos/">
+<meta property="og:image" content="https://somethingsneverheal.github.io/wiagb-maqueta/og.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  /* el menú común ocupa ~64 px arriba (~84 en móvil); la portada cabe en lo que queda */
+  :root { --top: 72px; --h: min(calc(100dvh - var(--top) - 130px), 128vw); --w: calc(var(--h) * 237 / 335); }
+  @media (max-width: 760px) { :root { --top: 92px; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100dvh; overflow: hidden; background: #000; color: #bbb; font: 12px/1.4 Helvetica, Arial, sans-serif;
+         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding-top: var(--top);
+         user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  button { background: none; border: 1px solid #555; color: #ddd; padding: 7px 16px; cursor: pointer; font: inherit; letter-spacing: .08em; }
+  button:hover { border-color: #ddd; }
+  #card { position: relative; width: var(--w); height: var(--h); background: #141210 center/cover; touch-action: pan-y; }
+  /* mismo dorado que la maqueta: sombra abajo, brillo arriba y reflejo lento */
+  .gold { position: absolute; inset: 0; pointer-events: none;
+          filter: drop-shadow(0 1.2px .6px rgba(0,0,0,.75)) drop-shadow(0 -.6px 0 rgba(255,240,190,.55)); }
+  .gold i { position: absolute; inset: 0; -webkit-mask: center/100% 100% no-repeat; mask: center/100% 100% no-repeat;
+            background: linear-gradient(170deg, #b8892f 0%, #cda852 30%, #f3dc9a 42%, #fffbe6 50%, #f3dc9a 58%, #cda852 70%, #b8892f 100%);
+            background-size: 100% 250%; animation: brillo 4.5s ease-in-out infinite alternate; }
+  @keyframes brillo { from { background-position: 0 0; } to { background-position: 0 100%; } }
+  .bar { display: flex; gap: 18px; align-items: center; }
+  #ley { min-width: 220px; text-align: center; letter-spacing: .08em; text-transform: uppercase; }
+  #ley b { display: block; color: #d8b45a; font-weight: normal; font-size: 14px; margin-bottom: 3px; }
+  .hint { opacity: .45; font-size: 9px; letter-spacing: .1em; text-align: center; padding: 0 12px; }
+</style>
+</head>
+<body>
+<div id="card"><div class="gold"><i id="oro"></i></div></div>
+<div class="bar"><button id="prev">←</button><div id="ley"></div><button id="next">→</button></div>
+<div class="hint">NUEVA SELECCIÓN · 10 FUENTES DE DAFONT · 22/11</div>
+<script src="data.js"></script>
+<script>
+// Primera selección del barrido de DaFont (22/11/2026): secciones Terror y Gótico, licencias de uso libre, elegidas por Fabián
+const L = FONTS;
+let i = 0;
+const card = document.getElementById("card"), oro = document.getElementById("oro");
+card.style.backgroundImage = `url(${FOTO})`;
+function render() {
+  const f = L[i];
+  oro.style.webkitMaskImage = oro.style.maskImage = `url(${f.m})`;
+  document.getElementById("ley").innerHTML = `<b>${i + 1} / ${L.length}</b>${f.n}`;
+}
+const mover = d => { i = (i + d + L.length) % L.length; render(); };
+document.getElementById("prev").onclick = () => mover(-1);
+document.getElementById("next").onclick = () => mover(1);
+addEventListener("keydown", e => { if (e.key === "ArrowRight") mover(1); if (e.key === "ArrowLeft") mover(-1); });
+// deslizar la portada a los lados también cambia
+let x0 = null;
+card.addEventListener("pointerdown", e => { x0 = e.clientX; });
+card.addEventListener("pointerup", e => { if (x0 !== null && Math.abs(e.clientX - x0) > 40) mover(e.clientX < x0 ? 1 : -1); x0 = null; });
+for (const ev of ["contextmenu", "dragstart", "selectstart"]) addEventListener(ev, e => e.preventDefault());
+render();
+</script>
+<script src="../nav.js"></script>
+</body>
+</html>
