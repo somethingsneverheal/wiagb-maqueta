@@ -34,7 +34,6 @@
   #cols { display: flex; gap: 6px; align-items: center; font-size: 10px; letter-spacing: .12em; }
   #cols input { width: 190px; accent-color: #d8b45a; cursor: pointer; }
   #cols b { color: #d8b45a; font-weight: normal; min-width: 1em; }
-  .p { transform-origin: 0 0; }
   button { background: #000; border: 1px solid #555; color: #ddd; padding: 7px 16px; cursor: pointer; font: inherit; letter-spacing: .08em; }
   button:hover { border-color: #ddd; }
   #ley { min-width: 230px; text-align: center; letter-spacing: .08em; text-transform: uppercase; }
@@ -92,16 +91,12 @@ function cuadricula() {
   [...grid.children].forEach((p, k) => p.hidden = k >= n);
   document.getElementById("nc").textContent = c;
 }
-// FLIP: cada póster sale de donde estaba y se desliza a su sitio nuevo
+// al cambiar de columnas no se deslizan: cada póster aparece en su sitio nuevo con un "pop" (crece, se pasa un poco y vuelve), uno detrás de otro
 function recolocar() {
-  const ps = [...grid.children], antes = ps.map(p => p.hidden ? null : p.getBoundingClientRect());
   cuadricula();
-  ps.forEach((p, k) => {
-    if (p.hidden) return; const b = p.getBoundingClientRect(), a = antes[k];
-    if (!a) return p.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450 });
-    p.animate([{ transform: `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width})` }, { transform: "none" }],
-              { duration: 550, easing: "cubic-bezier(.2, .7, .2, 1)" });
-  });
+  [...grid.children].filter(p => !p.hidden).forEach((p, k) => p.animate(
+    [{ transform: "scale(.3)", opacity: 0 }, { transform: "scale(1.07)", opacity: 1, offset: .65 }, { transform: "scale(1)", opacity: 1 }],
+    { duration: 380, delay: k * 18, easing: "cubic-bezier(.3, .6, .4, 1)", fill: "backwards" }));
 }
 rango.addEventListener("input", () => { if (+rango.value === c) return; c = +rango.value; localStorage.setItem("wiagb_posters_cols", c); recolocar(); });
 addEventListener("resize", cuadricula);
