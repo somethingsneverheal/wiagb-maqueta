@@ -19,7 +19,7 @@
          user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   @media (max-width: 760px) { body { padding: 96px 10px 150px; } }
   /* cuadrícula de pósters A3 apaisados, como los de Jeric */
-  /* columnas a elegir (todas dividen 20, así no queda ninguno suelto); TODOS = las que hagan caber los 20 en pantalla lo más grandes posible */
+  /* columnas según el slider (ver cuadricula() abajo) */
   #grid { display: grid; grid-template-columns: repeat(var(--c, 4), 1fr); gap: var(--g, 14px); max-width: var(--mw, 1800px); margin: 0 auto; }
   .p { position: relative; aspect-ratio: 420 / 297; background: #141210 center/cover; container-type: inline-size; overflow: hidden; }
   .p span { position: absolute; left: 0; right: 0; text-align: center; color: #fff; white-space: nowrap;
@@ -32,8 +32,9 @@
          padding: 22px 10px 16px; background: linear-gradient(transparent, #000 35%); }
   .fila { display: flex; gap: 18px; align-items: center; }
   #cols { display: flex; gap: 6px; align-items: center; font-size: 10px; letter-spacing: .12em; }
-  #cols button { padding: 4px 10px; font-size: 10px; color: #888; border-color: #333; }
-  #cols button.on { color: #d8b45a; border-color: #d8b45a; }
+  #cols input { width: 190px; accent-color: #d8b45a; cursor: pointer; }
+  #cols b { color: #d8b45a; font-weight: normal; min-width: 1em; }
+  .p { transform-origin: 0 0; }
   button { background: #000; border: 1px solid #555; color: #ddd; padding: 7px 16px; cursor: pointer; font: inherit; letter-spacing: .08em; }
   button:hover { border-color: #ddd; }
   #ley { min-width: 230px; text-align: center; letter-spacing: .08em; text-transform: uppercase; }
@@ -42,7 +43,7 @@
 </head>
 <body>
 <div id="grid"></div>
-<div class="bar"><div id="cols">COLUMNAS <button>1</button><button>2</button><button>4</button><button>5</button><button>TODOS</button></div>
+<div class="bar"><div id="cols">COLUMNAS <input id="rango" type="range" min="1" max="6" step="1"> <b id="nc"></b></div>
 <div class="fila"><button id="prev">←</button><div id="ley"></div><button id="next">→</button></div></div>
 <script src="titulos.js"></script>
 <script>
@@ -77,21 +78,32 @@ addEventListener("touchend", e => {
   if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
   if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) mover(dx < 0 ? 1 : -1);
 });
-// columnas: se recuerda la última elegida; por defecto 1 en móvil y 4 en ordenador
-let modo = localStorage.getItem("wiagb_posters_cols") || (innerWidth < 760 ? "1" : "4");
+// columnas con el slider (1 a 5; en móvil hasta 4; el último paso encuadra todos en la pantalla). Si 20 no se reparte justo, se quitan los últimos para que no quede ninguno suelto
+const rango = document.getElementById("rango");
+rango.max = innerWidth < 760 ? 4 : 5;
+let c = Math.min(+localStorage.getItem("wiagb_posters_cols") || (innerWidth < 760 ? 1 : 4), +rango.max);
+rango.value = c;
 function cuadricula() {
-  let c = +modo, mw = "1800px", g = innerWidth < 760 ? 8 : 14;
-  const cs = getComputedStyle(document.body), W = grid.clientWidth || innerWidth - 40;
+  const g = innerWidth < 760 ? 8 : 14, cs = getComputedStyle(document.body);
   const H = innerHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-  mw = Math.min(1800, c * H * 420 / 297 + g * (c - 1)) + "px";   // una fila nunca más alta que la pantalla (sobre todo con 1 columna)
-  if (modo === "TODOS") {   // de las columnas que dividen 20, la que deja los pósters más grandes cabiendo todos en la pantalla
-    const tam = c => Math.min((Math.min(W, 1800) - g * (c - 1)) / c, (H - g * (FOTOS / c - 1)) / (FOTOS / c) * 420 / 297);
-    c = [1, 2, 4, 5, 10, 20].reduce((a, b) => tam(b) > tam(a) ? b : a); mw = (tam(c) * c + g * (c - 1)) + "px";
-  }
-  grid.style.setProperty("--c", c); grid.style.setProperty("--mw", mw); grid.style.setProperty("--g", g + "px");
-  for (const b of document.querySelectorAll("#cols button")) b.classList.toggle("on", b.textContent === modo);
+  grid.style.setProperty("--c", c); grid.style.setProperty("--g", g + "px");
+  const n = Math.floor(FOTOS / c) * c, filas = c == rango.max ? n / c : 1;   // una fila nunca más alta que la pantalla; en el último paso, todas
+  grid.style.setProperty("--mw", Math.min(1800, c * (H - g * (filas - 1)) / filas * 420 / 297 + g * (c - 1)) + "px");
+  [...grid.children].forEach((p, k) => p.hidden = k >= n);
+  document.getElementById("nc").textContent = c;
 }
-document.getElementById("cols").onclick = e => { if (e.target.tagName !== "BUTTON") return; modo = e.target.textContent; localStorage.setItem("wiagb_posters_cols", modo); cuadricula(); };
+// FLIP: cada póster sale de donde estaba y se desliza a su sitio nuevo
+function recolocar() {
+  const ps = [...grid.children], antes = ps.map(p => p.hidden ? null : p.getBoundingClientRect());
+  cuadricula();
+  ps.forEach((p, k) => {
+    if (p.hidden) return; const b = p.getBoundingClientRect(), a = antes[k];
+    if (!a) return p.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450 });
+    p.animate([{ transform: `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width})` }, { transform: "none" }],
+              { duration: 550, easing: "cubic-bezier(.2, .7, .2, 1)" });
+  });
+}
+rango.addEventListener("input", () => { if (+rango.value === c) return; c = +rango.value; localStorage.setItem("wiagb_posters_cols", c); recolocar(); });
 addEventListener("resize", cuadricula);
 cuadricula();
 for (const ev of ["contextmenu", "dragstart"]) addEventListener(ev, e => e.preventDefault());
