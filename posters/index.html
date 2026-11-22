@@ -66,7 +66,7 @@ function render() {
   const f = L[i];
   grid.style.setProperty("--r", R[f.slug] || 6);
   for (const t of grid.querySelectorAll("i")) t.style.backgroundImage = `url(t/${f.slug}.png)`;
-  document.getElementById("ley").innerHTML = `<b>${i + 1}º · ${f.v} votos</b>${corto(f.n)}`;
+  document.getElementById("ley").innerHTML = `<b>${i + 1}º · ${f.v ? f.v + " votos" : "nueva"}</b>${corto(f.n)}`;
 }
 const mover = d => { i = (i + d + L.length) % L.length; render(); };
 document.getElementById("prev").onclick = () => mover(-1);

@@ -2,7 +2,7 @@
 (() => {
   const base = document.currentScript.src.replace(/nav\.js.*$/, "");
   const rel = location.href.split(/[?#]/)[0].replace(base, "");
-  const items = [["Maqueta", ""], ["Títulos", "titulos/"], ["Vista 3D", "libros/"], ["Pósters", "posters/"]];
+  const items = [["Maqueta", ""], ["Títulos", "seleccion/"], ["Vista 3D", "libros/"], ["Pósters", "posters/"]];
   const on = r => r ? rel.startsWith(r) : (rel === "" || rel === "index.html");
   const st = document.createElement("style");
   st.textContent = `@font-face { font-family: Grinder; src: local("MB-RealGrinder"), url(${base}p/MB-Real_Grinder.ttf); }
