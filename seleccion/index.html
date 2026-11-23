@@ -55,7 +55,7 @@ card.style.backgroundImage = `url(${FOTO})`;
 function render() {
   const f = L[i];
   oro.style.webkitMaskImage = oro.style.maskImage = `url(${f.m})`;
-  document.getElementById("ley").innerHTML = `<b>${i + 1}º · ${f.v ? f.v + " votos" : "nueva"}</b>${corto(f.n)}`;
+  document.getElementById("ley").innerHTML = `<b>${i + 1}º · ${f.v ? f.v + " votos" : "nueva"}</b>${f.n.replace(", ", " · ")}`;
 }
 const mover = d => { i = (i + d + L.length) % L.length; render(); };
 document.getElementById("prev").onclick = () => mover(-1);
