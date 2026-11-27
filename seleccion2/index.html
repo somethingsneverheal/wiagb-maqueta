@@ -40,7 +40,7 @@
 <body>
 <div id="card"><div class="gold"><i id="oro"></i></div></div>
 <div class="bar"><button id="prev">←</button><div id="ley"></div><button id="next">→</button></div>
-<div class="hint">VOTACIÓN CERRADA · 20 PERSONAS · ORDENADAS DE MÁS A MENOS VOTADA</div>
+<div class="hint">LAS 10 DE LA HOJA · MISMO ORDEN Y NÚMERO</div>
 <script src="../seleccion/data.js"></script>
 <script>
 // Resultado final de la votación (cerrada el 18/11/2026, 20 personas)
@@ -48,16 +48,16 @@ const VOTOS = { "Old London": 12, "Chomsky": 9, "Deicide Remain": 7, "Disgrowl C
   "Something in the Grave Yard": 5, "Eater of Children": 5, "MB Lords Of Evil": 4, "Break Gothic": 3, "Anger Raven": 3,
   "MB-Gothic Dawn": 2, "MB-Forever Raw": 2, "MB Graveyard Designs": 2 };
 const corto = n => n.replace(/, .*/, "");
-// las 13 de la hoja del 24/11
-const FUERA = ["mb_forever_raw", "something_in_the_grave_yard", "eater_of_children", "anger_raven"];
-const L = FONTS.filter(f => !FUERA.includes(f.slug)).map(f => ({ ...f, v: VOTOS[corto(f.n)] || 0 })).sort((a, b) => b.v - a.v);
+// las 10 de la hoja del 27/11, en el mismo orden y con el mismo número (de más vieja a más nueva, Impact la última)
+const ORDEN = ["jsl-blackletter", "old_london", "olde-english", "mb_gothic_dawn", "mb_lords_of_evil", "mb_graveyard_designs", "blackstone-hand", "deicide_remain", "break_gothic", "impact"];
+const L = ORDEN.map(s => FONTS.find(f => f.slug === s));
 let i = 0;
 const card = document.getElementById("card"), oro = document.getElementById("oro");
 card.style.backgroundImage = `url(${FOTO})`;
 function render() {
   const f = L[i];
   oro.style.webkitMaskImage = oro.style.maskImage = `url(${f.m})`;
-  document.getElementById("ley").innerHTML = `<b>${i + 1}º · ${f.v ? f.v + " votos" : "nueva"}</b><span style="text-transform:none">${f.a} (${f.n.split(", ")[1]})</span>`;
+  document.getElementById("ley").innerHTML = `<b>${String(i + 1).padStart(2, "0")} de ${L.length}</b><span style="text-transform:none">${f.a} (${f.n.split(", ")[1]})</span>`;
 }
 const mover = d => { i = (i + d + L.length) % L.length; render(); };
 document.getElementById("prev").onclick = () => mover(-1);
