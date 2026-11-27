@@ -55,8 +55,8 @@ const VOTOS = { "Old London": 12, "Chomsky": 9, "Deicide Remain": 7, "Disgrowl C
 const INFO = "JETAIMEPOURTOUJOURS · BOOK LAUNCH · 20 OCTOBER · 18-21H · TERRANOVA · COMTE BORRELL 99 · BARCELONA";
 const FOTOS = 20;
 const corto = n => n.replace(/, .*/, "");
-// las 10 de la hoja del 27/11, mismo orden y número que Títulos 2
-const ORDEN = ["jsl-blackletter", "old_london", "olde-english", "mb_gothic_dawn", "mb_lords_of_evil", "mb_graveyard_designs", "blackstone-hand", "deicide_remain", "break_gothic", "impact"];
+// las 7 de la hoja final del 27/11, mismo orden y número que Títulos 2
+const ORDEN = ["jsl-blackletter", "old_london", "olde-english", "mb_gothic_dawn", "mb_lords_of_evil", "mb_graveyard_designs", "impact"];
 const L = ORDEN.map(s => TITULOS.find(f => f.slug === s));
 // proporción de cada título para que la caja mida lo mismo que la imagen
 const R = {}; L.forEach(f => { const im = new Image(); im.onload = () => { R[f.slug] = im.width / im.height; if (f === L[i]) render(); }; im.src = `t/${f.slug}.png`; });

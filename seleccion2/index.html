@@ -40,7 +40,7 @@
 <body>
 <div id="card"><div class="gold"><i id="oro"></i></div></div>
 <div class="bar"><button id="prev">←</button><div id="ley"></div><button id="next">→</button></div>
-<div class="hint">LAS 10 DE LA HOJA · MISMO ORDEN Y NÚMERO</div>
+<div class="hint">LAS 7 DE LA HOJA · MISMO ORDEN Y NÚMERO</div>
 <script src="../seleccion/data.js"></script>
 <script>
 // Resultado final de la votación (cerrada el 18/11/2026, 20 personas)
@@ -48,8 +48,8 @@ const VOTOS = { "Old London": 12, "Chomsky": 9, "Deicide Remain": 7, "Disgrowl C
   "Something in the Grave Yard": 5, "Eater of Children": 5, "MB Lords Of Evil": 4, "Break Gothic": 3, "Anger Raven": 3,
   "MB-Gothic Dawn": 2, "MB-Forever Raw": 2, "MB Graveyard Designs": 2 };
 const corto = n => n.replace(/, .*/, "");
-// las 10 de la hoja del 27/11, en el mismo orden y con el mismo número (de más vieja a más nueva, Impact la última)
-const ORDEN = ["jsl-blackletter", "old_london", "olde-english", "mb_gothic_dawn", "mb_lords_of_evil", "mb_graveyard_designs", "blackstone-hand", "deicide_remain", "break_gothic", "impact"];
+// las 7 de la hoja final del 27/11, en el mismo orden y con el mismo número (de más vieja a más nueva, Impact la última)
+const ORDEN = ["jsl-blackletter", "old_london", "olde-english", "mb_gothic_dawn", "mb_lords_of_evil", "mb_graveyard_designs", "impact"];
 const L = ORDEN.map(s => FONTS.find(f => f.slug === s));
 let i = 0;
 const card = document.getElementById("card"), oro = document.getElementById("oro");
